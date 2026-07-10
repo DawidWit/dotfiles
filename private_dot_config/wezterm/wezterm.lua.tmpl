@@ -2,7 +2,11 @@ local wezterm = require 'wezterm'
 local act = wezterm.action
 local config = wezterm.config_builder()
 
+{{ if eq .chezmoi.os "darwin" -}}
 config.default_prog = { '/opt/homebrew/bin/tmux', 'new-session', '-A', '-s', 'main' }
+{{- else -}}
+config.default_prog = { '/home/linuxbrew/.linuxbrew/bin/tmux', 'new-session', '-A', '-s', 'main' }
+{{- end }}
 
 -- ─── Font ────────────────────────────────────────────────────────────────────
 
