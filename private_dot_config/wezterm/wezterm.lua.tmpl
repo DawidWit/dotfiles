@@ -23,6 +23,24 @@ config.harfbuzz_features = { 'calt', 'liga', 'dlig' }
 
 config.color_scheme = 'Tokyo Night'
 
+-- ─── Background Image ────────────────────────────────────────────────────────
+-- Solid Tokyo Night base color, with a faintly visible image layered on top.
+
+config.background = {
+  {
+    source = { Color = '#1a1b26' },
+    width = '100%',
+    height = '100%',
+  },
+  {
+    source = { File = wezterm.config_dir .. '/background.jpg' },
+    horizontal_align = 'Center',
+    vertical_align = 'Middle',
+    opacity = 0.04,
+    hsb = { brightness = 0.9 },
+  },
+}
+
 -- ─── Window ──────────────────────────────────────────────────────────────────
 
 config.window_background_opacity = 0.95
@@ -84,16 +102,10 @@ config.colors = {
 -- ─── Status Bar ──────────────────────────────────────────────────────────────
 
 wezterm.on('update-right-status', function(window, pane)
-  local key_table = window:active_key_table()
   local workspace = window:active_workspace()
   local date = wezterm.strftime '%a %b %-d  %H:%M'
 
   local elements = {}
-
-  if key_table then
-    table.insert(elements, { Foreground = { Color = '#e0af68' } })
-    table.insert(elements, { Text = ' ' .. key_table .. ' ' })
-  end
 
   if workspace ~= 'default' then
     table.insert(elements, { Foreground = { Color = '#7aa2f7' } })
@@ -134,17 +146,19 @@ wezterm.on('format-tab-title', function(tab, tabs, panes, cfg, hover, max_width)
   return ' ' .. index .. ': ' .. title .. ' '
 end)
 
--- ─── Leader Key (tmux-style: CTRL+A) ────────────────────────────────────────
-
-config.leader = { key = 'a', mods = 'CTRL', timeout_milliseconds = 1500 }
-
 -- ─── Keybindings ─────────────────────────────────────────────────────────────
+-- Panes, windows, splits, resize, copy mode and scrollback are all handled by
+-- tmux. Disable wezterm's built-in defaults so they don't create competing
+-- panes/tabs; only the terminal-level bindings below remain.
+
+config.disable_default_key_bindings = true
 
 config.keys = {
-  -- Pass through CTRL+A by pressing it twice
-  { key = 'a', mods = 'LEADER|CTRL', action = act.SendKey { key = 'a', mods = 'CTRL' } },
+  -- Send NUL (0x00) for CTRL+Space so tmux's prefix (C-Space) works;
+  -- WezTerm does not emit this byte for CTRL+Space on its own.
+  { key = 'Space', mods = 'CTRL', action = act.SendString '\x00' },
 
-  -- Smart copy/paste: CTRL+C copies when text is selected, else sends SIGINT
+  -- CTRL+C copies when text is selected, else sends SIGINT.
   {
     key = 'c',
     mods = 'CTRL',
@@ -160,111 +174,37 @@ config.keys = {
   },
   { key = 'v', mods = 'CTRL', action = act.PasteFrom 'Clipboard' },
 
-  -- Pane splits
-  { key = '|', mods = 'LEADER|SHIFT', action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } },
-  { key = '-', mods = 'LEADER',       action = act.SplitVertical { domain = 'CurrentPaneDomain' } },
-
-  -- Pane navigation (leader + vim keys)
-  { key = 'h', mods = 'LEADER', action = act.ActivatePaneDirection 'Left' },
-  { key = 'j', mods = 'LEADER', action = act.ActivatePaneDirection 'Down' },
-  { key = 'k', mods = 'LEADER', action = act.ActivatePaneDirection 'Up' },
-  { key = 'l', mods = 'LEADER', action = act.ActivatePaneDirection 'Right' },
-
-  -- Pane navigation (CTRL+SHIFT + arrows, no leader needed)
-  { key = 'LeftArrow',  mods = 'CTRL|SHIFT', action = act.ActivatePaneDirection 'Left' },
-  { key = 'RightArrow', mods = 'CTRL|SHIFT', action = act.ActivatePaneDirection 'Right' },
-  { key = 'UpArrow',    mods = 'CTRL|SHIFT', action = act.ActivatePaneDirection 'Up' },
-  { key = 'DownArrow',  mods = 'CTRL|SHIFT', action = act.ActivatePaneDirection 'Down' },
-
-  -- Enter resize mode
-  { key = 'r', mods = 'LEADER', action = act.ActivateKeyTable { name = 'resize_pane', one_shot = false } },
-
-  -- Close pane
-  { key = 'x', mods = 'LEADER', action = act.CloseCurrentPane { confirm = true } },
-
-  -- Tabs
-  { key = 'c', mods = 'LEADER',       action = act.SpawnTab 'CurrentPaneDomain' },
-  { key = 'n', mods = 'LEADER',       action = act.ActivateTabRelative(1) },
-  { key = 'p', mods = 'LEADER',       action = act.ActivateTabRelative(-1) },
-  { key = '&', mods = 'LEADER|SHIFT', action = act.CloseCurrentTab { confirm = true } },
-
-  -- Tab selection by number (leader + 1-9)
-  { key = '1', mods = 'LEADER', action = act.ActivateTab(0) },
-  { key = '2', mods = 'LEADER', action = act.ActivateTab(1) },
-  { key = '3', mods = 'LEADER', action = act.ActivateTab(2) },
-  { key = '4', mods = 'LEADER', action = act.ActivateTab(3) },
-  { key = '5', mods = 'LEADER', action = act.ActivateTab(4) },
-  { key = '6', mods = 'LEADER', action = act.ActivateTab(5) },
-  { key = '7', mods = 'LEADER', action = act.ActivateTab(6) },
-  { key = '8', mods = 'LEADER', action = act.ActivateTab(7) },
-  { key = '9', mods = 'LEADER', action = act.ActivateTab(8) },
-
-  -- Copy mode
-  { key = '[', mods = 'LEADER', action = act.ActivateCopyMode },
-
-  -- Search
-  { key = '/', mods = 'LEADER', action = act.Search 'CurrentSelectionOrEmptyString' },
-
-  -- Quick select (URLs, hashes, etc.)
-  { key = 'Space', mods = 'LEADER', action = act.QuickSelect },
-
-  -- Font size
   { key = '=', mods = 'CTRL', action = act.IncreaseFontSize },
   { key = '-', mods = 'CTRL', action = act.DecreaseFontSize },
   { key = '0', mods = 'CTRL', action = act.ResetFontSize },
 
-  -- Toggle fullscreen
   { key = 'Enter', mods = 'ALT', action = act.ToggleFullScreen },
-
-  -- Zoom current pane
-  { key = 'z', mods = 'LEADER', action = act.TogglePaneZoomState },
-
-  -- Rotate panes
-  { key = 'o', mods = 'LEADER', action = act.RotatePanes 'Clockwise' },
-
-  -- Workspaces
-  { key = 'w', mods = 'LEADER', action = act.ShowLauncherArgs { flags = 'FUZZY|WORKSPACES' } },
-
-  -- Command palette
   { key = 'P', mods = 'CTRL|SHIFT', action = act.ActivateCommandPalette },
 
-  -- Scrollback
-  { key = 'UpArrow',   mods = 'CTRL', action = act.ScrollByLine(-1) },
-  { key = 'DownArrow', mods = 'CTRL', action = act.ScrollByLine(1) },
+  { key = 'UpArrow',   mods = 'CTRL',  action = act.ScrollByLine(-1) },
+  { key = 'DownArrow', mods = 'CTRL',  action = act.ScrollByLine(1) },
   { key = 'PageUp',    mods = 'SHIFT', action = act.ScrollByPage(-1) },
   { key = 'PageDown',  mods = 'SHIFT', action = act.ScrollByPage(1) },
 }
 
--- ─── Key Tables ──────────────────────────────────────────────────────────────
+-- ─── Mouse Bindings ──────────────────────────────────────────────────────────
+-- Window has no title bar (RESIZE decorations), so drag it with SUPER + left-drag.
 
-config.key_tables = {
-  resize_pane = {
-    { key = 'h',          action = act.AdjustPaneSize { 'Left', 2 } },
-    { key = 'j',          action = act.AdjustPaneSize { 'Down', 2 } },
-    { key = 'k',          action = act.AdjustPaneSize { 'Up', 2 } },
-    { key = 'l',          action = act.AdjustPaneSize { 'Right', 2 } },
-    { key = 'LeftArrow',  action = act.AdjustPaneSize { 'Left', 2 } },
-    { key = 'DownArrow',  action = act.AdjustPaneSize { 'Down', 2 } },
-    { key = 'UpArrow',    action = act.AdjustPaneSize { 'Up', 2 } },
-    { key = 'RightArrow', action = act.AdjustPaneSize { 'Right', 2 } },
-    { key = 'Escape',     action = 'PopKeyTable' },
-    { key = 'Enter',      action = 'PopKeyTable' },
+config.mouse_bindings = {
+  {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'SUPER',
+    action = act.StartWindowDrag,
   },
 }
 
--- ─── Scrollback ──────────────────────────────────────────────────────────────
+-- ─── Misc ────────────────────────────────────────────────────────────────────
 
 config.scrollback_lines = 10000
-
--- ─── Cursor ──────────────────────────────────────────────────────────────────
-
 config.default_cursor_style = 'BlinkingBar'
 config.cursor_blink_rate = 500
 config.cursor_blink_ease_in = 'Constant'
 config.cursor_blink_ease_out = 'Constant'
-
--- ─── Misc ────────────────────────────────────────────────────────────────────
-
 config.check_for_updates = false
 config.automatically_reload_config = true
 config.audible_bell = 'Disabled'
