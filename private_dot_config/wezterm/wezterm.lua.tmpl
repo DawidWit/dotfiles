@@ -153,27 +153,34 @@ end)
 
 config.disable_default_key_bindings = true
 
+-- Copy the pane selection to the clipboard; `fallback` runs only when nothing
+-- is selected. CTRL+C passes it SIGINT so interrupts still work; CMD+C passes
+-- nil because on macOS the key is copy-only and should never interrupt.
+local function copy_or(fallback)
+  return wezterm.action_callback(function(window, pane)
+    local sel = window:get_selection_text_for_pane(pane)
+    if sel and #sel > 0 then
+      window:perform_action(act.CopyTo 'ClipboardAndPrimarySelection', pane)
+      window:perform_action(act.ClearSelection, pane)
+    elseif fallback then
+      window:perform_action(fallback, pane)
+    end
+  end)
+end
+
 config.keys = {
   -- Send NUL (0x00) for CTRL+Space so tmux's prefix (C-Space) works;
   -- WezTerm does not emit this byte for CTRL+Space on its own.
   { key = 'Space', mods = 'CTRL', action = act.SendString '\x00' },
 
-  -- CTRL+C copies when text is selected, else sends SIGINT.
-  {
-    key = 'c',
-    mods = 'CTRL',
-    action = wezterm.action_callback(function(window, pane)
-      local sel = window:get_selection_text_for_pane(pane)
-      if sel and #sel > 0 then
-        window:perform_action(act.CopyTo 'ClipboardAndPrimarySelection', pane)
-        window:perform_action(act.ClearSelection, pane)
-      else
-        window:perform_action(act.SendKey { key = 'c', mods = 'CTRL' }, pane)
-      end
-    end),
-  },
+  -- CTRL+C / CTRL+V copy & paste on every platform (the Windows/Linux chords).
+  { key = 'c', mods = 'CTRL', action = copy_or(act.SendKey { key = 'c', mods = 'CTRL' }) },
   { key = 'v', mods = 'CTRL', action = act.PasteFrom 'Clipboard' },
-
+{{ if eq .chezmoi.os "darwin" }}
+  -- On macOS, CMD+C / CMD+V mirror them so the native chords work too.
+  { key = 'c', mods = 'SUPER', action = copy_or(nil) },
+  { key = 'v', mods = 'SUPER', action = act.PasteFrom 'Clipboard' },
+{{ end }}
   { key = '=', mods = 'CTRL', action = act.IncreaseFontSize },
   { key = '-', mods = 'CTRL', action = act.DecreaseFontSize },
   { key = '0', mods = 'CTRL', action = act.ResetFontSize },
