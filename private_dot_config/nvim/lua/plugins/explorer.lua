@@ -26,6 +26,9 @@ return {
           hidden = true, -- show dotfiles
           ignored = false, -- but not what .gitignore excludes
           layout = { preset = "sidebar", preview = false },
+          -- Badge files this branch committed vs its base branch, on top of
+          -- the built-in working-tree status colors.
+          format = require("config.explorer-git-branch").format,
         },
       },
     },
@@ -33,6 +36,12 @@ return {
   keys = {
     { "<leader>e", toggle, desc = "Explorer (toggle)" },
     -- Jump to the current file in the tree, opening it if needed.
-    { "<leader>E", function() Snacks.explorer.reveal() end, desc = "Explorer (reveal file)" },
+    {
+      "<leader>E",
+      function()
+        Snacks.explorer.reveal()
+      end,
+      desc = "Explorer (reveal file)",
+    },
   },
 }
