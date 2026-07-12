@@ -4,10 +4,14 @@
 -- an LSP also highlights has to be set in both namespaces or it reverts to the
 -- theme's color the moment a language server attaches.
 local overrides = {
-  -- functions (VSCode Dark+), and punctuation, which shares their color
+  -- brackets: () [] {}. Neutral gray like VSCode Dark+, so they no longer read
+  -- as functions (which keep the yellow below).
+  ["#d4d4d4"] = {
+    "@punctuation.bracket",
+  },
+  -- functions (VSCode Dark+), and the comma/semicolon punctuation sharing their color
   ["#dcdcaa"] = {
     "Delimiter",
-    "@punctuation.bracket",
     "@punctuation.delimiter",
     "@punctuation.special",
     "Function",
