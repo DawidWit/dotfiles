@@ -88,4 +88,3 @@ Implementation verification will:
 5. Provide a reboot acceptance check: after a snapshot is current, reboot,
    launch `tmux`, and confirm the workspace is restored and `nvim`, `claude`,
    and `codex` start fresh in their former panes.
-
