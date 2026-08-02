@@ -363,6 +363,23 @@
   #
   # VCS_STATUS_* parameters are set by gitstatus plugin. See reference:
   # https://github.com/romkatv/gitstatus/blob/master/gitstatus.plugin.zsh.
+  function get_git_line_change_counts() {
+    emulate -L zsh
+
+    local added_lines deleted_lines file_path
+    local -i total_added_lines=0
+    local -i total_deleted_lines=0
+
+    while IFS=$'\t' read -r added_lines deleted_lines file_path; do
+      [[ $added_lines == <-> ]] && (( total_added_lines += added_lines ))
+      [[ $deleted_lines == <-> ]] && (( total_deleted_lines += deleted_lines ))
+    done < <(
+      command git -C "$VCS_STATUS_WORKDIR" diff --no-ext-diff --numstat HEAD -- 2>/dev/null
+    )
+
+    reply=($total_added_lines $total_deleted_lines)
+  }
+
   function my_git_formatter() {
     emulate -L zsh
 
@@ -393,10 +410,6 @@
 
     if [[ -n $VCS_STATUS_LOCAL_BRANCH ]]; then
       local branch=${(V)VCS_STATUS_LOCAL_BRANCH}
-      # If local branch name is at most 32 characters long, show it in full.
-      # Otherwise show the first 12 … the last 12.
-      # Tip: To always show local branch name in full without truncation, delete the next line.
-      (( $#branch > 32 )) && branch[13,-13]="…"  # <-- this line
       res+="${clean}${(g::)POWERLEVEL9K_VCS_BRANCH_ICON}${branch//\%/%%}"
     fi
 
@@ -444,8 +457,13 @@
     (( VCS_STATUS_PUSH_COMMITS_AHEAD && !VCS_STATUS_PUSH_COMMITS_BEHIND )) && res+=" "
     # ⇢42 if ahead of the push remote; no leading space if also behind: ⇠42⇢42.
     (( VCS_STATUS_PUSH_COMMITS_AHEAD  )) && res+="${clean}⇢${VCS_STATUS_PUSH_COMMITS_AHEAD}"
-    # *42 if have stashes.
-    (( VCS_STATUS_STASHES        )) && res+=" ${clean}*${VCS_STATUS_STASHES}"
+    # +42 -7 for added and deleted lines across staged and unstaged tracked changes.
+    if (( VCS_STATUS_NUM_STAGED || VCS_STATUS_NUM_UNSTAGED )); then
+      local -a reply
+      get_git_line_change_counts
+      (( reply[1] )) && res+=" ${modified}+${reply[1]}"
+      (( reply[2] )) && res+=" ${modified}-${reply[2]}"
+    fi
     # 'merge' if the repo is in an unusual state.
     [[ -n $VCS_STATUS_ACTION     ]] && res+=" ${conflicted}${VCS_STATUS_ACTION}"
     # ~42 if have merge conflicts.
