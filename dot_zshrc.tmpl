@@ -120,6 +120,38 @@ export PATH="$HOME/.npm-global/bin:$PATH"
 # Claude Code with bypass permissions
 alias cclaude="claude --dangerously-skip-permissions"
 
+# Launch both kompas2 backend apps (no Docker) — kompas2 :8080 + investments :8081.
+# Opens a tmux "backend" window split into two panes, one bootRun per app under
+# the `local` Spring profile. Mongo (27020) / Artemis (61616) must already be up.
+runkompasbackend() {
+  local repo="$HOME/Documents/GitHub/kompas2-backend"
+  local api="SPRING_PROFILES_ACTIVE=local ./gradlew :kompas2:bootRun; exec zsh"
+  local inv="SPRING_PROFILES_ACTIVE=local ./gradlew :kompas2investments:bootRun; exec zsh"
+  if [ -n "$TMUX" ]; then
+    tmux new-window -c "$repo" -n backend "$api"
+    tmux split-window -h -c "$repo" "$inv"
+    tmux select-layout even-horizontal
+    tmux select-pane -L
+  else
+    tmux new-session -d -s backend -c "$repo" "$api"
+    tmux split-window -h -t backend -c "$repo" "$inv"
+    tmux select-layout -t backend even-horizontal
+    tmux attach -t backend
+  fi
+}
+
+# Stop both kompas2 backend apps started by runkompasbackend.
+# Kills the forked Spring Boot JVMs (and any gradle bootRun still starting up),
+# then closes the tmux "backend" window.
+stopkompasbackend() {
+  pkill -f 'kompas2\.Kompas2ApplicationKt'
+  pkill -f 'kompas2investments\.Kompas2InvestmentsApplicationKt'
+  pkill -f ':kompas2:bootRun'
+  pkill -f ':kompas2investments:bootRun'
+  tmux kill-window -t backend 2>/dev/null
+  echo "kompas2 backend stopped."
+}
+
 # Safe-chain via PATH shims (works in interactive + non-interactive shells).
 # Replaces the broken function-wrapper approach that called `safe-chain pnpm <args>`.
 export PATH="$HOME/.safe-chain/shims:$PATH"
