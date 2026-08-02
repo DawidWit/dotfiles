@@ -17,6 +17,9 @@ config.default_prog = { '/home/linuxbrew/.linuxbrew/bin/tmux', 'new-session', '-
 config.font = wezterm.font_with_fallback {
   { family = 'JetBrains Mono', weight = 'Medium' },
   { family = 'Fira Code', weight = 'Medium' },
+  -- Nerd Font glyphs (statusline icons, devicons) live in the Private Use Area,
+  -- which the fonts above don't cover. Installed at ~/Library/Fonts.
+  { family = 'JetBrainsMono Nerd Font', weight = 'Medium' },
   'Noto Color Emoji',
 }
 config.font_size = 13.0
