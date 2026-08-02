@@ -7,3 +7,8 @@
 -- binding of <C-LeftMouse> to the old ctags jump.
 -- The keyboard equivalent is `gd`, which LazyVim already binds to the same thing.
 vim.keymap.set("n", "<C-LeftMouse>", "<LeftMouse><cmd>lua vim.lsp.buf.definition()<cr>", { desc = "Go to definition" })
+
+-- Smooth viewport scrolling: holding Shift+Up/Down repeats these small
+-- movements, while Snacks animates each viewport change.
+vim.keymap.set("n", "<S-Up>", "3<C-Y>", { desc = "Scroll up smoothly" })
+vim.keymap.set("n", "<S-Down>", "3<C-E>", { desc = "Scroll down smoothly" })
