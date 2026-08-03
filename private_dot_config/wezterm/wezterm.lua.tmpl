@@ -31,26 +31,79 @@ config.harfbuzz_features = { 'calt', 'liga', 'dlig' }
 config.color_scheme = 'Tokyo Night'
 
 -- ─── Background Image ────────────────────────────────────────────────────────
--- Solid Tokyo Night base color, with a faintly visible image layered on top.
+-- Solid base color with a faintly visible image layered on top. Each preset
+-- pairs a base color with an image opacity and brightness.
+--
+-- `prefix + =` in tmux runs ~/.local/bin/wezterm-bg, which bumps the index in
+-- the state file below. That file is on the config reload watch list, so
+-- wezterm re-reads this config and repaints — no restart, no keybinding here.
+--
+-- Images come from backgrounds/. With none present it falls back to the single
+-- background.gif and only the shading cycles. background.gif is not tracked in
+-- chezmoi, so on a fresh machine there may be no image at all; the image layer
+-- is skipped entirely rather than pointing at a missing file.
+
+local bg_state = (os.getenv 'XDG_CACHE_HOME' or (os.getenv 'HOME' .. '/.cache')) .. '/wezterm-bg/current'
+wezterm.add_to_config_reload_watch_list(bg_state)
+
+local shadings = {
+  { color = '#0d1428', opacity = 0.04, brightness = 0.90 }, -- Tokyo Night navy
+  { color = '#05050a', opacity = 0.07, brightness = 0.75 }, -- near black
+  { color = '#1a1026', opacity = 0.05, brightness = 0.95 }, -- plum
+  { color = '#0d1f1c', opacity = 0.05, brightness = 0.90 }, -- deep teal
+}
+
+local function readable(path)
+  local f = io.open(path, 'r')
+  if f then
+    f:close()
+    return true
+  end
+  return false
+end
+
+local bg_images = {}
+for _, pattern in ipairs { '*.gif', '*.png', '*.jpg', '*.jpeg', '*.webp' } do
+  for _, path in ipairs(wezterm.glob(wezterm.config_dir .. '/backgrounds/' .. pattern)) do
+    bg_images[#bg_images + 1] = path
+  end
+end
+if #bg_images == 0 and readable(wezterm.config_dir .. '/background.gif') then
+  bg_images = { wezterm.config_dir .. '/background.gif' }
+end
+
+local bg_index = 0
+do
+  local f = io.open(bg_state, 'r')
+  if f then
+    bg_index = tonumber((f:read '*a' or ''):match '%d+') or 0
+    f:close()
+  end
+end
+
+local shade = shadings[(bg_index % #shadings) + 1]
 
 config.background = {
   {
-    source = { Color = '#0d1428' },
+    source = { Color = shade.color },
     width = '100%',
     height = '100%',
   },
-  {
-    source = { File = wezterm.config_dir .. '/background.gif' },
+}
+
+if #bg_images > 0 then
+  table.insert(config.background, {
+    source = { File = bg_images[(bg_index % #bg_images) + 1] },
     -- Without an explicit size the image draws at its native resolution and
     -- leaves the solid layer showing around it. Stretch it to the window.
     width = '100%',
     height = '100%',
     horizontal_align = 'Center',
     vertical_align = 'Middle',
-    opacity = 0.04,
-    hsb = { brightness = 0.9 },
-  },
-}
+    opacity = shade.opacity,
+    hsb = { brightness = shade.brightness },
+  })
+end
 
 -- ─── Window ──────────────────────────────────────────────────────────────────
 

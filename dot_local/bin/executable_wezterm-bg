@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Cycle wezterm's background preset from outside wezterm.
+#
+# Bound to `prefix + =` in tmux. wezterm can't be told to change its background
+# over a socket, but it does watch files registered with
+# add_to_config_reload_watch_list — so bumping the index in this state file
+# makes wezterm re-read its config and repaint.
+#
+# Usage: wezterm-bg [next|prev|reset]
+
+set -u
+
+STATE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/wezterm-bg"
+STATE="$STATE_DIR/current"
+
+mkdir -p "$STATE_DIR"
+
+current=$(cat "$STATE" 2>/dev/null || echo 0)
+case "$current" in
+'' | *[!0-9]*) current=0 ;;
+esac
+
+case "${1:-next}" in
+next) new=$((current + 1)) ;;
+prev) new=$((current > 0 ? current - 1 : 0)) ;;
+reset) new=0 ;;
+*)
+  printf 'usage: %s [next|prev|reset]\n' "${0##*/}" >&2
+  exit 2
+  ;;
+esac
+
+# Write via a temp file and rename: a truncate-then-write can be observed
+# half-done by the watcher, and an empty read resets the index to 0.
+printf '%s' "$new" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
