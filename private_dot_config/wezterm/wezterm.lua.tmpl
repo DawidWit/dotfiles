@@ -55,8 +55,10 @@ wezterm.add_to_config_reload_watch_list(bg_state)
 local MAX_FPS = 60 -- fallback for presets that don't set one
 
 local presets = {
-  -- 1 — car. 1920x1080, ~349 frames, 205MB; its own frames are very dark, so
-  -- the base colour is near-black rather than tinted.
+  -- 1 — car. 1280x720, 334 frames, 56MB, downscaled from a 1920x1080 205MB
+  -- original with `gifsicle --resize-fit 1280x720 --optimize=3 --lossy=80`.
+  -- Its own frames are very dark, so the base colour is near-black rather than
+  -- tinted.
   {
     image = 'car.gif',
     color = '#05050a',
