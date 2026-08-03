@@ -101,7 +101,28 @@ local presets = {
     saturation = 1.10,
     max_fps = 60,
   },
-  -- 4 — solid, no image. Cheapest: nothing to decode or recomposite.
+  -- 4 — background2. 800x450, ~146 frames, 7MB, 33fps. Copied as-is: already
+  -- well under 1280 wide, so downscaling would only lose detail. Base colour
+  -- derived from the image's own average (#8995ab, a cool grey).
+  {
+    image = 'background2.gif',
+    color = '#2f343b',
+    opacity = 0.06,
+    brightness = 0.85,
+    saturation = 1.10,
+    max_fps = 60,
+  },
+  -- 5 — background3. 800x450, ~151 frames, 18MB, 33fps. Also copied as-is. Base
+  -- colour derived from its average (#b28a7d, a warm tan).
+  {
+    image = 'background3.gif',
+    color = '#3e302b',
+    opacity = 0.06,
+    brightness = 0.85,
+    saturation = 1.10,
+    max_fps = 60,
+  },
+  -- 6 — solid, no image. Cheapest: nothing to decode or recomposite.
   {
     color = '#05050a',
     max_fps = 120,
