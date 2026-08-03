@@ -193,7 +193,10 @@ end
 
 -- ─── Window ──────────────────────────────────────────────────────────────────
 
-config.window_background_opacity = 0.95
+-- Transparency costs something: the compositor blends the desktop behind every
+-- frame, and the default background is animated. 0.80 is about as low as the
+-- #c0caf5 foreground stays comfortable over a busy desktop.
+config.window_background_opacity = 0.85
 config.window_padding = {
   left = 12,
   right = 12,
