@@ -49,14 +49,22 @@ local bg_state = (os.getenv 'XDG_CACHE_HOME' or (os.getenv 'HOME' .. '/.cache'))
 wezterm.add_to_config_reload_watch_list(bg_state)
 
 local presets = {
-  -- 1
+  -- 1 — car. 1920x1080, ~349 frames, 205MB; its own frames are very dark, so
+  -- the base colour is near-black rather than tinted.
+  {
+    image = 'car.gif',
+    color = '#05050a',
+    opacity = 0.12,
+    brightness = 0.85,
+  },
+  -- 2
   {
     image = 'background.gif',
     color = '#0d1428', -- Tokyo Night navy
     opacity = 0.04,
     brightness = 0.90,
   },
-  -- 2 — solid, no image
+  -- 3 — solid, no image. Cheapest: nothing to decode or recomposite.
   {
     color = '#05050a',
   },
@@ -337,7 +345,9 @@ config.check_for_updates = false
 config.automatically_reload_config = true
 config.audible_bell = 'Disabled'
 config.max_fps = 120
-config.animation_fps = 60
+-- Both background gifs run at 12.5 fps (8/100s frame delay), so 60 meant five
+-- redundant recompositions per frame. Capping here costs nothing visually.
+config.animation_fps = 13
 -- Off: it reserved a strip at the right edge and painted an unstyled grey
 -- thumb there. Set colors.scrollbar_thumb and flip this back if you want it.
 config.enable_scroll_bar = false
