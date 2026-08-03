@@ -345,9 +345,9 @@ config.check_for_updates = false
 config.automatically_reload_config = true
 config.audible_bell = 'Disabled'
 config.max_fps = 120
--- Both background gifs run at 12.5 fps (8/100s frame delay), so 60 meant five
--- redundant recompositions per frame. Capping here costs nothing visually.
-config.animation_fps = 13
+-- Easing rate for the blinking cursor, blinking text and visual bell — not
+-- animated image playback, which follows each image's own frame delays.
+config.animation_fps = 30
 -- Off: it reserved a strip at the right edge and painted an unstyled grey
 -- thumb there. Set colors.scrollbar_thumb and flip this back if you want it.
 config.enable_scroll_bar = false
