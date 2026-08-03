@@ -80,11 +80,12 @@ local presets = {
   },
   -- 3 — background1. 1280x682, 140 frames, 18MB, downscaled from 2028x1080 /
   -- 49MB with `gifsicle --resize-fit 1280x720 --optimize=3 --lossy=80`. Runs at
-  -- 33fps, so it is the busiest of the three. Base colour is derived from the
-  -- image's own average (#938575, a warm neutral), darkened for text contrast.
+  -- 33fps, so it is the busiest of the three. Base colour is a chosen dark pink
+  -- rather than derived from the image (whose average is #938575, a warm
+  -- neutral). Deeper: #22101a. Stronger: #431c31.
   {
     image = 'background1.gif',
-    color = '#241f1a',
+    color = '#301524',
     opacity = 0.06,
     brightness = 0.85,
     saturation = 1.10,
