@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Weather for the tmux status bar, with failure-aware caching.
+#
+# Replaces dracula's weather_wrapper.sh, which caches whatever its fetch
+# returns — including "Weather Unavailable" — for the full 20 minute interval.
+# tmux-continuum restores the session at boot before the network is up, so the
+# first fetch reliably fails and that error then sits in the status bar for
+# twenty minutes.
+#
+# This keeps the last good reading when a fetch fails and retries after a
+# minute instead. Prints nothing if there has never been a good reading.
+
+set -u
+
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tmux-weather"
+DATA="$CACHE_DIR/data"
+STAMP="$CACHE_DIR/last-attempt"
+# Overridable so the failure path can be tested without breaking the network.
+FETCH="${TMUX_WEATHER_FETCH:-$HOME/.tmux/plugins/tmux/scripts/weather.sh}"
+OK_INTERVAL=1200  # refresh a good reading every 20 min
+RETRY_INTERVAL=60 # retry a failed one after 1 min
+
+mkdir -p "$CACHE_DIR"
+
+now=$(date +%s)
+last=$(cat "$STAMP" 2>/dev/null || echo 0)
+case "$last" in
+'' | *[!0-9]*) last=0 ;;
+esac
+
+if ((now - last >= OK_INTERVAL)); then
+  # celsius, hide location, auto-detect location, hide errors (empty on failure)
+  fresh=$("$FETCH" false false "" true 2>/dev/null)
+  if [ -n "$fresh" ]; then
+    printf '%s' "$fresh" >"$DATA"
+    printf '%s' "$now" >"$STAMP"
+  else
+    # Back-date the stamp so the next call retries in RETRY_INTERVAL rather
+    # than waiting out the whole refresh window.
+    printf '%s' "$((now - OK_INTERVAL + RETRY_INTERVAL))" >"$STAMP"
+  fi
+fi
+
+cat "$DATA" 2>/dev/null
