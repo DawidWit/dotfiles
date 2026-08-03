@@ -78,7 +78,19 @@ local presets = {
     brightness = 0.90,
     max_fps = 60,
   },
-  -- 3 — solid, no image. Cheapest: nothing to decode or recomposite.
+  -- 3 — background1. 1280x682, 140 frames, 18MB, downscaled from 2028x1080 /
+  -- 49MB with `gifsicle --resize-fit 1280x720 --optimize=3 --lossy=80`. Runs at
+  -- 33fps, so it is the busiest of the three. Base colour is derived from the
+  -- image's own average (#938575, a warm neutral), darkened for text contrast.
+  {
+    image = 'background1.gif',
+    color = '#241f1a',
+    opacity = 0.06,
+    brightness = 0.85,
+    saturation = 1.10,
+    max_fps = 60,
+  },
+  -- 4 — solid, no image. Cheapest: nothing to decode or recomposite.
   {
     color = '#05050a',
     max_fps = 120,
