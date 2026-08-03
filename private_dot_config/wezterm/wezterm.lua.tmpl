@@ -101,7 +101,20 @@ local presets = {
     saturation = 1.10,
     max_fps = 60,
   },
-  -- 4 — solid, no image. Cheapest: nothing to decode or recomposite.
+  -- 4 — background2. 1092x720, ~1515 frames, 164MB, downscaled from 1638x1080 /
+  -- 188MB with `gifsicle --resize-fit 1280x720 --resize-method lanczos3
+  -- --resize-colors 256 --optimize=3`. By far the most expensive preset: 50fps
+  -- and roughly 4.7x as many frames as any other, so it recomposites constantly.
+  -- Base colour derived from the image's own average (#5a88c4, a mid blue).
+  {
+    image = 'background2.gif',
+    color = '#1f2f44',
+    opacity = 0.06,
+    brightness = 0.85,
+    saturation = 1.10,
+    max_fps = 50,
+  },
+  -- 5 — solid, no image. Cheapest: nothing to decode or recomposite.
   {
     color = '#05050a',
     max_fps = 120,
