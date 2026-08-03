@@ -9,16 +9,61 @@
 #
 # This keeps the last good reading when a fetch fails and retries after a
 # minute instead. Prints nothing if there has never been a good reading.
+#
+# Self-contained: queries wttr.in directly rather than shelling out to the
+# dracula plugin scripts, which live in a bare clone under ~/.tmux and aren't
+# tracked anywhere — on a fresh machine that path doesn't exist.
 
 set -u
 
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tmux-weather"
 DATA="$CACHE_DIR/data"
 STAMP="$CACHE_DIR/last-attempt"
-# Overridable so the failure path can be tested without breaking the network.
-FETCH="${TMUX_WEATHER_FETCH:-$HOME/.tmux/plugins/tmux/scripts/weather.sh}"
 OK_INTERVAL=1200  # refresh a good reading every 20 min
 RETRY_INTERVAL=60 # retry a failed one after 1 min
+
+# No location in the URL: wttr.in geolocates from the request IP.
+# %C = condition, %t = temperature, m = metric.
+URL="${TMUX_WEATHER_URL:-https://wttr.in/?format=%C:%t&m}"
+
+# Fetch a reading and print it as "<icon> <temp>", or return nonzero.
+fetch() {
+  local raw cond temp icon
+  # TMUX_WEATHER_RAW is a test seam: skip the network, use a canned response.
+  if [ -n "${TMUX_WEATHER_RAW:-}" ]; then
+    raw="$TMUX_WEATHER_RAW"
+  else
+    raw=$(command -p curl -sfL --max-time 5 "$URL" 2>/dev/null) || return 1
+  fi
+
+  case "$raw" in
+  *:*) ;;
+  *) return 1 ;; # not "condition:temp", so not a reading
+  esac
+
+  cond=$(printf '%s' "${raw%%:*}" | tr '[:upper:]' '[:lower:]')
+  temp="${raw##*:}"
+  temp="${temp//+/}"
+
+  # wttr.in answers 200 with prose for an unresolvable location; a reading
+  # always carries a digit.
+  case "$temp" in
+  *[0-9]*) ;;
+  *) return 1 ;;
+  esac
+
+  # Substring matches, so compound conditions ("light rain shower",
+  # "patchy snow possible") land on the right icon.
+  case "$cond" in
+  *snow* | *sleet* | *blizzard* | *ice*) icon='❄' ;;
+  *thunder*) icon='⚡' ;;
+  *rain* | *shower* | *drizzle*) icon='☂' ;;
+  *cloud* | *overcast* | *fog* | *mist* | *haze*) icon='☁' ;;
+  *) icon='☀' ;;
+  esac
+
+  printf '%s %s' "$icon" "$temp"
+}
 
 mkdir -p "$CACHE_DIR"
 
@@ -29,9 +74,7 @@ case "$last" in
 esac
 
 if ((now - last >= OK_INTERVAL)); then
-  # celsius, hide location, auto-detect location, hide errors (empty on failure)
-  fresh=$("$FETCH" false false "" true 2>/dev/null)
-  if [ -n "$fresh" ]; then
+  if fresh=$(fetch); then
     printf '%s' "$fresh" >"$DATA"
     printf '%s' "$now" >"$STAMP"
   else
