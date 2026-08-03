@@ -57,13 +57,17 @@ local MAX_FPS = 60 -- fallback for presets that don't set one
 local presets = {
   -- 1 — car. 1280x720, 334 frames, 56MB, downscaled from a 1920x1080 205MB
   -- original with `gifsicle --resize-fit 1280x720 --optimize=3 --lossy=80`.
-  -- Its own frames are very dark, so the base colour is near-black rather than
-  -- tinted.
+  --
+  -- The base colour carries the tint: at opacity 0.12 the image contributes
+  -- little, so ~88% of what you see is this layer. Hence a dark amber rather
+  -- than a bright orange, which would wash out the foreground text. Dial it up
+  -- with #2a1405 (warmer) or #3d1d06 (strongest still readable).
   {
     image = 'car.gif',
-    color = '#05050a',
+    color = '#1a0d03',
     opacity = 0.12,
     brightness = 0.85,
+    saturation = 1.20, -- push the gif's own warm tones
     max_fps = 60,
   },
   -- 2
@@ -178,7 +182,12 @@ if bg.image then
     horizontal_align = 'Center',
     vertical_align = 'Middle',
     opacity = bg.opacity or 0.04,
-    hsb = { brightness = bg.brightness or 0.9 },
+    -- All three are multipliers against the source, so 1.0 is untouched.
+    hsb = {
+      brightness = bg.brightness or 0.9,
+      saturation = bg.saturation or 1.0,
+      hue = bg.hue or 1.0,
+    },
   })
 end
 
