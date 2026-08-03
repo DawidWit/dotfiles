@@ -31,32 +31,40 @@ config.harfbuzz_features = { 'calt', 'liga', 'dlig' }
 config.color_scheme = 'Tokyo Night'
 
 -- ─── Background Image ────────────────────────────────────────────────────────
--- Solid base color with a faintly visible image layered on top. Each preset
--- pairs a base color with an image opacity and brightness.
+-- Each preset ties one image to the colour and blend that suit it: the solid
+-- layer shows through the image, so they have to be chosen together.
 --
 -- `prefix + =` in tmux runs ~/.local/bin/wezterm-bg, which bumps the index in
 -- the state file below. That file is on the config reload watch list, so
 -- wezterm re-reads this config and repaints — no restart, no keybinding here.
 --
--- Images come from backgrounds/. With none present it falls back to the single
--- background.gif and only the shading cycles. background.gif is not tracked in
--- chezmoi, so on a fresh machine there may be no image at all; the image layer
--- is skipped entirely rather than pointing at a missing file.
+-- Images live in backgrounds/ and are deliberately not tracked in chezmoi, so
+-- a preset whose file is missing is skipped rather than pointing wezterm at a
+-- path that doesn't exist. This table is the whole set: an image sitting in
+-- backgrounds/ without an entry here is ignored, and an entry with no image at
+-- all is a plain solid colour.
 
+local bg_dir = wezterm.config_dir .. '/backgrounds'
 local bg_state = (os.getenv 'XDG_CACHE_HOME' or (os.getenv 'HOME' .. '/.cache')) .. '/wezterm-bg/current'
 wezterm.add_to_config_reload_watch_list(bg_state)
 
-local shadings = {
-  { color = '#0d1428', opacity = 0.04, brightness = 0.90 }, -- 1 Tokyo Night navy
-  { color = '#05050a', opacity = 0.07, brightness = 0.75 }, -- 2 near black
-  { color = '#1a1026', opacity = 0.05, brightness = 0.95 }, -- 3 plum
-  { color = '#0d1f1c', opacity = 0.05, brightness = 0.90 }, -- 4 deep teal
+local presets = {
+  -- 1
+  {
+    image = 'background.gif',
+    color = '#0d1428', -- Tokyo Night navy
+    opacity = 0.04,
+    brightness = 0.90,
+  },
+  -- 2 — solid, no image
+  {
+    color = '#05050a',
+  },
 }
 
--- Preset every new wezterm process starts on, as the 1-based number in the
--- comments above. `prefix + =` cycles onward from here; the choice is not kept
--- across restarts. When several images are present this also selects which one,
--- by position in the sorted backgrounds/ listing.
+-- Preset every new wezterm process starts on, as the number in the comments
+-- above. `prefix + =` cycles onward from here; the choice is not kept across
+-- restarts. If that preset's image is missing, the first usable one is used.
 local DEFAULT_PRESET = 1
 
 local function readable(path)
@@ -68,14 +76,25 @@ local function readable(path)
   return false
 end
 
-local bg_images = {}
-for _, pattern in ipairs { '*.gif', '*.png', '*.jpg', '*.jpeg', '*.webp' } do
-  for _, path in ipairs(wezterm.glob(wezterm.config_dir .. '/backgrounds/' .. pattern)) do
-    bg_images[#bg_images + 1] = path
+-- Drop presets whose image isn't on this machine.
+local usable = {}
+for _, preset in ipairs(presets) do
+  if not preset.image or readable(bg_dir .. '/' .. preset.image) then
+    usable[#usable + 1] = preset
   end
 end
-if #bg_images == 0 and readable(wezterm.config_dir .. '/background.gif') then
-  bg_images = { wezterm.config_dir .. '/background.gif' }
+if #usable == 0 then
+  usable = { { color = presets[1] and presets[1].color or '#0d1428' } }
+end
+
+-- DEFAULT_PRESET numbers the authored list, which may be longer than the usable
+-- one; fall back to the first usable preset when the named one was skipped.
+local default_index = 0
+for i, preset in ipairs(usable) do
+  if preset == presets[DEFAULT_PRESET] then
+    default_index = i - 1
+    break
+  end
 end
 
 local function read_bg_index()
@@ -108,37 +127,37 @@ end
 -- cycles onward from there rather than from whatever the last session left.
 local bg_index
 if wezterm.GLOBAL.bg_launched then
-  bg_index = read_bg_index() or (DEFAULT_PRESET - 1)
+  bg_index = read_bg_index() or default_index
 else
   wezterm.GLOBAL.bg_launched = true
-  bg_index = DEFAULT_PRESET - 1
+  bg_index = default_index
   -- Only write when it differs — writing trips the watcher and costs a reload.
   if read_bg_index() ~= bg_index then
     write_bg_index(bg_index)
   end
 end
 
-local shade = shadings[(bg_index % #shadings) + 1]
+local bg = usable[(bg_index % #usable) + 1]
 
 config.background = {
   {
-    source = { Color = shade.color },
+    source = { Color = bg.color },
     width = '100%',
     height = '100%',
   },
 }
 
-if #bg_images > 0 then
+if bg.image then
   table.insert(config.background, {
-    source = { File = bg_images[(bg_index % #bg_images) + 1] },
+    source = { File = bg_dir .. '/' .. bg.image },
     -- Without an explicit size the image draws at its native resolution and
     -- leaves the solid layer showing around it. Stretch it to the window.
     width = '100%',
     height = '100%',
     horizontal_align = 'Center',
     vertical_align = 'Middle',
-    opacity = shade.opacity,
-    hsb = { brightness = shade.brightness },
+    opacity = bg.opacity or 0.04,
+    hsb = { brightness = bg.brightness or 0.9 },
   })
 end
 
