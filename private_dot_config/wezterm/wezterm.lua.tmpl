@@ -122,7 +122,47 @@ local presets = {
     saturation = 1.10,
     max_fps = 60,
   },
-  -- 6 — solid, no image. Cheapest: nothing to decode or recomposite.
+  -- 6 — background4. 800x450, ~301 frames, 23MB, 33fps. Average #707eb7, a
+  -- muted indigo.
+  {
+    image = 'background4.gif',
+    color = '#272c40',
+    opacity = 0.06,
+    brightness = 0.85,
+    saturation = 1.10,
+    max_fps = 60,
+  },
+  -- 7 — background5. 800x600, ~303 frames, 34MB, 33fps. Taller aspect than the
+  -- others, so more of it is cropped when stretched. Average #a89084, warm tan.
+  {
+    image = 'background5.gif',
+    color = '#3a322e',
+    opacity = 0.06,
+    brightness = 0.85,
+    saturation = 1.10,
+    max_fps = 60,
+  },
+  -- 8 — background6. 800x450, ~230 frames, 8MB, 25fps. Average #4f4846, near
+  -- neutral, so the base is close to grey.
+  {
+    image = 'background6.gif',
+    color = '#1b1918',
+    opacity = 0.06,
+    brightness = 0.85,
+    saturation = 1.10,
+    max_fps = 60,
+  },
+  -- 9 — background7. 800x449, ~176 frames, 9MB, 33fps. Average #53514d, also
+  -- near neutral.
+  {
+    image = 'background7.gif',
+    color = '#1d1c1a',
+    opacity = 0.06,
+    brightness = 0.85,
+    saturation = 1.10,
+    max_fps = 60,
+  },
+  -- 10 — solid, no image. Cheapest: nothing to decode or recomposite.
   {
     color = '#05050a',
     max_fps = 120,
