@@ -48,6 +48,12 @@ local bg_dir = wezterm.config_dir .. '/backgrounds'
 local bg_state = (os.getenv 'XDG_CACHE_HOME' or (os.getenv 'HOME' .. '/.cache')) .. '/wezterm-bg/current'
 wezterm.add_to_config_reload_watch_list(bg_state)
 
+-- `max_fps` is per preset: an animated background is recomposited at the render
+-- rate, so the heavy ones are worth capping while a solid colour costs nothing
+-- and can run as fast as the display. It's a global wezterm setting, but
+-- switching presets re-evaluates this whole config, so it gets re-applied.
+local MAX_FPS = 60 -- fallback for presets that don't set one
+
 local presets = {
   -- 1 — car. 1920x1080, ~349 frames, 205MB; its own frames are very dark, so
   -- the base colour is near-black rather than tinted.
@@ -56,6 +62,7 @@ local presets = {
     color = '#05050a',
     opacity = 0.12,
     brightness = 0.85,
+    max_fps = 60,
   },
   -- 2
   {
@@ -63,10 +70,12 @@ local presets = {
     color = '#0d1428', -- Tokyo Night navy
     opacity = 0.04,
     brightness = 0.90,
+    max_fps = 60,
   },
   -- 3 — solid, no image. Cheapest: nothing to decode or recomposite.
   {
     color = '#05050a',
+    max_fps = 120,
   },
 }
 
@@ -146,6 +155,8 @@ else
 end
 
 local bg = usable[(bg_index % #usable) + 1]
+
+config.max_fps = bg.max_fps or MAX_FPS
 
 config.background = {
   {
@@ -344,7 +355,8 @@ config.cursor_blink_ease_out = 'Constant'
 config.check_for_updates = false
 config.automatically_reload_config = true
 config.audible_bell = 'Disabled'
-config.max_fps = 120
+-- max_fps is set per background preset, up in the Background Image section.
+-- Setting it here would override that, since this runs later.
 -- Easing rate for the blinking cursor, blinking text and visual bell — not
 -- animated image playback, which follows each image's own frame delays.
 config.animation_fps = 30
