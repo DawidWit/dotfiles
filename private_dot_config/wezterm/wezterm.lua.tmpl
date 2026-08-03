@@ -47,11 +47,17 @@ local bg_state = (os.getenv 'XDG_CACHE_HOME' or (os.getenv 'HOME' .. '/.cache'))
 wezterm.add_to_config_reload_watch_list(bg_state)
 
 local shadings = {
-  { color = '#0d1428', opacity = 0.04, brightness = 0.90 }, -- Tokyo Night navy
-  { color = '#05050a', opacity = 0.07, brightness = 0.75 }, -- near black
-  { color = '#1a1026', opacity = 0.05, brightness = 0.95 }, -- plum
-  { color = '#0d1f1c', opacity = 0.05, brightness = 0.90 }, -- deep teal
+  { color = '#0d1428', opacity = 0.04, brightness = 0.90 }, -- 1 Tokyo Night navy
+  { color = '#05050a', opacity = 0.07, brightness = 0.75 }, -- 2 near black
+  { color = '#1a1026', opacity = 0.05, brightness = 0.95 }, -- 3 plum
+  { color = '#0d1f1c', opacity = 0.05, brightness = 0.90 }, -- 4 deep teal
 }
+
+-- Preset every new wezterm process starts on, as the 1-based number in the
+-- comments above. `prefix + =` cycles onward from here; the choice is not kept
+-- across restarts. When several images are present this also selects which one,
+-- by position in the sorted backgrounds/ listing.
+local DEFAULT_PRESET = 1
 
 local function readable(path)
   local f = io.open(path, 'r')
@@ -72,12 +78,43 @@ if #bg_images == 0 and readable(wezterm.config_dir .. '/background.gif') then
   bg_images = { wezterm.config_dir .. '/background.gif' }
 end
 
-local bg_index = 0
-do
+local function read_bg_index()
   local f = io.open(bg_state, 'r')
-  if f then
-    bg_index = tonumber((f:read '*a' or ''):match '%d+') or 0
-    f:close()
+  if not f then
+    return nil
+  end
+  local n = tonumber((f:read '*a' or ''):match '%d+')
+  f:close()
+  return n
+end
+
+local function write_bg_index(n)
+  local f = io.open(bg_state, 'w')
+  if not f then
+    -- First run on this machine: wezterm-bg hasn't created the cache dir yet.
+    os.execute("mkdir -p '" .. bg_state:gsub('/[^/]*$', '') .. "'")
+    f = io.open(bg_state, 'w')
+    if not f then
+      return
+    end
+  end
+  f:write(tostring(n))
+  f:close()
+end
+
+-- This config is re-evaluated on every reload, so distinguish the first
+-- evaluation in this process from later ones: wezterm.GLOBAL lives as long as
+-- the process does. On launch, pin DEFAULT_PRESET and persist it so wezterm-bg
+-- cycles onward from there rather than from whatever the last session left.
+local bg_index
+if wezterm.GLOBAL.bg_launched then
+  bg_index = read_bg_index() or (DEFAULT_PRESET - 1)
+else
+  wezterm.GLOBAL.bg_launched = true
+  bg_index = DEFAULT_PRESET - 1
+  -- Only write when it differs — writing trips the watcher and costs a reload.
+  if read_bg_index() ~= bg_index then
+    write_bg_index(bg_index)
   end
 end
 
