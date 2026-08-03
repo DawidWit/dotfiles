@@ -70,7 +70,14 @@ local presets = {
     saturation = 1.20, -- push the gif's own warm tones
     max_fps = 60,
   },
-  -- 2
+  -- 2 — background.gif. 1280x718, 166MB, upscaled 1.578x from an 811x455 / 55MB
+  -- original with `gifsicle --scale 1.578 --resize-method lanczos3
+  -- --resize-colors 256 --optimize=3`. This adds no detail — the source is a
+  -- Google Drive download with no recoverable higher-resolution version — it
+  -- only replaces the GPU's bilinear upscale with Lanczos. Costs 3.68MB per
+  -- frame against the original's 1.48MB. Original kept at
+  -- ~/Pictures/wezterm-originals/background-811x455.gif; copy it back over this
+  -- to revert.
   {
     image = 'background.gif',
     color = '#22101a', -- darker take on preset 3's pink
