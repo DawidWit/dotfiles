@@ -78,8 +78,11 @@ local presets = {
     brightness = 0.90,
     max_fps = 60,
   },
-  -- 3 — background1. 1280x682, 140 frames, 18MB, downscaled from 2028x1080 /
-  -- 49MB with `gifsicle --resize-fit 1280x720 --optimize=3 --lossy=80`. Runs at
+  -- 3 — background1. 1280x682, 140 frames, 44MB, downscaled from 2028x1080 /
+  -- 49MB with `gifsicle --resize-fit 1280x720 --resize-method lanczos3
+  -- --resize-colors 256 --optimize=3`. Deliberately no --lossy and Lanczos
+  -- rather than gifsicle's default point sampling: both only cost disk, while
+  -- per-frame decode stays at 3.49MB either way. Runs at
   -- 33fps, so it is the busiest of the three. Base colour is a chosen dark pink
   -- rather than derived from the image (whose average is #938575, a warm
   -- neutral). Deeper: #22101a. Stronger: #431c31.
