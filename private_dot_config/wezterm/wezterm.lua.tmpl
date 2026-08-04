@@ -55,7 +55,19 @@ wezterm.add_to_config_reload_watch_list(bg_state)
 local MAX_FPS = 60 -- fallback for presets that don't set one
 
 local presets = {
-  -- 1 — car. 1280x720, 334 frames, 56MB, downscaled from a 1920x1080 205MB
+  -- 1 — background0. 800x340, 259 frames, 27MB, copied as-is (already well under
+  -- 1280 wide, so downscaling would only lose detail). Base colour is a neutral
+  -- dark navy rather than sampled from the image; nudge it once you see it over
+  -- the terminal — warmer #1a1420, cooler #0d1220, or lift with #141c30.
+  {
+    image = 'background0.gif',
+    color = '#0d1428',
+    opacity = 0.06,
+    brightness = 0.85,
+    saturation = 1.10,
+    max_fps = 60,
+  },
+  -- 2 — car. 1280x720, 334 frames, 56MB, downscaled from a 1920x1080 205MB
   -- original with `gifsicle --resize-fit 1280x720 --optimize=3 --lossy=80`.
   --
   -- The base colour carries the tint: at opacity 0.12 the image contributes
@@ -70,7 +82,7 @@ local presets = {
     saturation = 1.20, -- push the gif's own warm tones
     max_fps = 60,
   },
-  -- 2 — background.gif. 1280x718, 166MB, upscaled 1.578x from an 811x455 / 55MB
+  -- 3 — background.gif. 1280x718, 166MB, upscaled 1.578x from an 811x455 / 55MB
   -- original with `gifsicle --scale 1.578 --resize-method lanczos3
   -- --resize-colors 256 --optimize=3`. This adds no detail — the source is a
   -- Google Drive download with no recoverable higher-resolution version — it
@@ -85,7 +97,7 @@ local presets = {
     brightness = 0.90,
     max_fps = 60,
   },
-  -- 3 — background1. 1280x682, 140 frames, 44MB, downscaled from 2028x1080 /
+  -- 4 — background1. 1280x682, 140 frames, 44MB, downscaled from 2028x1080 /
   -- 49MB with `gifsicle --resize-fit 1280x720 --resize-method lanczos3
   -- --resize-colors 256 --optimize=3`. Deliberately no --lossy and Lanczos
   -- rather than gifsicle's default point sampling: both only cost disk, while
@@ -101,7 +113,7 @@ local presets = {
     saturation = 1.10,
     max_fps = 60,
   },
-  -- 4 — background2. 800x450, ~146 frames, 7MB, 33fps. Copied as-is: already
+  -- 5 — background2. 800x450, ~146 frames, 7MB, 33fps. Copied as-is: already
   -- well under 1280 wide, so downscaling would only lose detail. Base colour
   -- derived from the image's own average (#8995ab, a cool grey).
   {
@@ -112,7 +124,7 @@ local presets = {
     saturation = 1.10,
     max_fps = 60,
   },
-  -- 5 — background3. 800x450, ~151 frames, 18MB, 33fps. Also copied as-is. Base
+  -- 6 — background3. 800x450, ~151 frames, 18MB, 33fps. Also copied as-is. Base
   -- colour derived from its average (#b28a7d, a warm tan).
   {
     image = 'background3.gif',
@@ -122,7 +134,7 @@ local presets = {
     saturation = 1.10,
     max_fps = 60,
   },
-  -- 6 — background4. 800x450, ~301 frames, 23MB, 33fps. Average #707eb7, a
+  -- 7 — background4. 800x450, ~301 frames, 23MB, 33fps. Average #707eb7, a
   -- muted indigo.
   {
     image = 'background4.gif',
@@ -132,7 +144,7 @@ local presets = {
     saturation = 1.10,
     max_fps = 60,
   },
-  -- 7 — background5. 800x600, ~303 frames, 34MB, 33fps. Taller aspect than the
+  -- 8 — background5. 800x600, ~303 frames, 34MB, 33fps. Taller aspect than the
   -- others, so more of it is cropped when stretched. Average #a89084, warm tan.
   {
     image = 'background5.gif',
@@ -142,7 +154,7 @@ local presets = {
     saturation = 1.10,
     max_fps = 60,
   },
-  -- 8 — solid, no image. Cheapest: nothing to decode or recomposite.
+  -- 9 — solid, no image. Cheapest: nothing to decode or recomposite.
   {
     color = '#05050a',
     max_fps = 120,
