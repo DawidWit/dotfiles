@@ -66,6 +66,9 @@ local presets = {
     brightness = 0.85,
     saturation = 1.10,
     max_fps = 60,
+    -- 2.35:1 source, far wider than the window — stretching it to fill would
+    -- squish it tall, so crop to fill instead (keeps aspect, trims the sides).
+    fit = 'Cover',
   },
   -- 2 — car. 1280x720, 334 frames, 56MB, downscaled from a 1920x1080 205MB
   -- original with `gifsicle --resize-fit 1280x720 --optimize=3 --lossy=80`.
@@ -249,12 +252,15 @@ config.background = {
 }
 
 if bg.image then
+  -- Default stretches the image to the window ('100%' on both axes), which
+  -- distorts sources whose aspect ratio differs from the terminal's. A preset
+  -- can set `fit = 'Cover'` to instead scale-and-crop: fills the window, keeps
+  -- the aspect ratio, trims whatever overflows.
+  local size = bg.fit == 'Cover' and 'Cover' or '100%'
   table.insert(config.background, {
     source = { File = bg_dir .. '/' .. bg.image },
-    -- Without an explicit size the image draws at its native resolution and
-    -- leaves the solid layer showing around it. Stretch it to the window.
-    width = '100%',
-    height = '100%',
+    width = size,
+    height = size,
     horizontal_align = 'Center',
     vertical_align = 'Middle',
     opacity = bg.opacity or 0.04,
