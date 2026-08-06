@@ -30,6 +30,7 @@ printf 'invalid = [\n' >"$caller_config_dir/chezmoi/chezmoi.toml"
 export XDG_CONFIG_HOME="$caller_config_dir"
 
 cp -R "$repo/private_dot_config/nvim" "$source_dir/private_dot_config/nvim"
+cp "$repo/.chezmoidata.toml" "$source_dir/.chezmoidata.toml"
 env \
   HOME="$home_dir" \
   XDG_CONFIG_HOME="$config_dir" \

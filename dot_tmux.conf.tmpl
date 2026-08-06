@@ -58,12 +58,12 @@ set -g @continuum-save-interval '60'
 set -g status-position top
 
 set -g status-style 'bg=default'
-set -g status-left '#[fg=#ff9e64,bg=default,bold] #S '
-set -g window-status-current-format '#[fg=#000000,bg=#ff9e64,bold] #I:#W '
+set -g status-left '#[fg={{ .palette.accent }},bg=default,bold] #S '
+set -g window-status-current-format '#[fg=#000000,bg={{ .palette.accent }},bold] #I:#W '
 set -g window-status-format '#[fg=#888888,bg=default] #I:#W '
 # Date/time is written with tmux's own strftime rather than #(date ...): tmux
 # runs strftime over the whole status line, so a % inside #() never reaches the
 # shell. Polish format — dd.mm, 24h.
-set -g status-right '#[fg=#ffb86c,bg=default] #(~/.local/bin/tmux-weather) #[fg=#565f89,bg=default]│#[fg=#ffb86c,bg=default]  %d.%m %H:%M'
+set -g status-right '#[fg=#ffb86c,bg=default] #(~/.local/bin/tmux-weather) #[fg={{ .palette.muted }},bg=default]│#[fg=#ffb86c,bg=default]  %d.%m %H:%M'
 
 run '~/.tmux/plugins/tpm/tpm'
