@@ -21,4 +21,14 @@ printf 'not-an-index' >"$state_dir/current"
 XDG_CACHE_HOME="$tmp_dir/cache" bash "$repo/dot_local/bin/executable_wezterm-bg" next
 assert_eq "$(<"$state_dir/current")" '1'
 
+printf '000' >"$state_dir/count"
+printf '2' >"$state_dir/current"
+XDG_CACHE_HOME="$tmp_dir/cache" bash "$repo/dot_local/bin/executable_wezterm-bg" next
+assert_eq "$(<"$state_dir/current")" '3'
+
+printf '08' >"$state_dir/count"
+printf '2' >"$state_dir/current"
+XDG_CACHE_HOME="$tmp_dir/cache" bash "$repo/dot_local/bin/executable_wezterm-bg" next
+assert_eq "$(<"$state_dir/current")" '3'
+
 pass 'wezterm background cycling wraps against the configured count'

@@ -23,7 +23,7 @@ esac
 
 count=$(cat "$COUNT" 2>/dev/null || true)
 case "$count" in
-'' | *[!0-9]* | 0) count= ;;
+'' | *[!0-9]* | 0*) count= ;;
 esac
 
 case "${1:-next}" in
