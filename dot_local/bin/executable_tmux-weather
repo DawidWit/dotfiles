@@ -19,6 +19,7 @@ set -u
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tmux-weather"
 DATA="$CACHE_DIR/data"
 STAMP="$CACHE_DIR/last-attempt"
+LOCK="$CACHE_DIR/lock"
 OK_INTERVAL=1200  # refresh a good reading every 20 min
 RETRY_INTERVAL=60 # retry a failed one after 1 min
 
@@ -32,6 +33,9 @@ fetch() {
   # TMUX_WEATHER_RAW is a test seam: skip the network, use a canned response.
   if [ -n "${TMUX_WEATHER_RAW:-}" ]; then
     raw="$TMUX_WEATHER_RAW"
+    if [ -n "${TMUX_WEATHER_FETCH_DELAY:-}" ]; then
+      sleep "$TMUX_WEATHER_FETCH_DELAY"
+    fi
   else
     raw=$(command -p curl -sfL --max-time 5 "$URL" 2>/dev/null) || return 1
   fi
@@ -65,6 +69,41 @@ fetch() {
   printf '%s %s' "$icon" "$temp"
 }
 
+write_cache_file() {
+  local target value temporary
+  target="$1"
+  value="$2"
+  temporary="${target}.$$"
+
+  if printf '%s' "$value" >"$temporary"; then
+    mv -f "$temporary" "$target"
+  else
+    rm -f "$temporary"
+    return 1
+  fi
+}
+
+lock_is_stale() {
+  local created
+  created=$(cat "$LOCK/created" 2>/dev/null || echo 0)
+  case "$created" in
+  '' | *[!0-9]*) created=0 ;;
+  esac
+
+  if ((created > 0 && now - created >= RETRY_INTERVAL)); then
+    return 0
+  fi
+
+  return 1
+}
+
+lock_acquired=0
+release_lock() {
+  if [ "$lock_acquired" -eq 1 ] && [ "$(cat "$LOCK/owner" 2>/dev/null || :)" = "$$" ]; then
+    rm -rf "$LOCK"
+  fi
+}
+
 mkdir -p "$CACHE_DIR"
 
 now=$(date +%s)
@@ -74,13 +113,27 @@ case "$last" in
 esac
 
 if ((now - last >= OK_INTERVAL)); then
+  if [ -d "$LOCK" ] && lock_is_stale; then
+    rm -rf "$LOCK"
+  fi
+
+  if ! mkdir "$LOCK" 2>/dev/null; then
+    cat "$DATA" 2>/dev/null
+    exit 0
+  fi
+
+  printf '%s' "$now" >"$LOCK/created"
+  printf '%s' "$$" >"$LOCK/owner"
+  lock_acquired=1
+  trap release_lock EXIT HUP INT TERM
+
   if fresh=$(fetch); then
-    printf '%s' "$fresh" >"$DATA"
-    printf '%s' "$now" >"$STAMP"
+    write_cache_file "$DATA" "$fresh"
+    write_cache_file "$STAMP" "$now"
   else
     # Back-date the stamp so the next call retries in RETRY_INTERVAL rather
     # than waiting out the whole refresh window.
-    printf '%s' "$((now - OK_INTERVAL + RETRY_INTERVAL))" >"$STAMP"
+    write_cache_file "$STAMP" "$((now - OK_INTERVAL + RETRY_INTERVAL))"
   fi
 fi
 
