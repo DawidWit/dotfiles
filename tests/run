@@ -1,5 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
 root=$(cd "$(dirname "$0")/.." && pwd)
+suite_tmp_dir=$(mktemp -d)
+trap 'rm -rf "$suite_tmp_dir"' EXIT
+
+export HOME="$suite_tmp_dir/home"
+export XDG_CACHE_HOME="$suite_tmp_dir/cache"
+export XDG_CONFIG_HOME="$suite_tmp_dir/config"
+export XDG_DATA_HOME="$suite_tmp_dir/data"
+export XDG_STATE_HOME="$suite_tmp_dir/state"
+export DOTFILES_BOOTSTRAP_EXTERNALS=
+export HTTP_PROXY=http://127.0.0.1:9
+export HTTPS_PROXY=http://127.0.0.1:9
+export ALL_PROXY=http://127.0.0.1:9
+export NO_PROXY=
+export http_proxy=$HTTP_PROXY
+export https_proxy=$HTTPS_PROXY
+export all_proxy=$ALL_PROXY
+export no_proxy=
+
+mkdir -p \
+  "$HOME" \
+  "$XDG_CACHE_HOME" \
+  "$XDG_CONFIG_HOME/chezmoi" \
+  "$XDG_DATA_HOME" \
+  "$XDG_STATE_HOME"
+: >"$XDG_CONFIG_HOME/chezmoi/chezmoi.toml"
+
 if [ "$#" -gt 0 ]; then tests=("$@"); else tests=("$root"/tests/test_*.sh); fi
 for test_file in "${tests[@]}"; do bash "$test_file"; done

@@ -27,6 +27,12 @@ jobs:
         run: |
           brew install chezmoi shellcheck shfmt stylua neovim tmux zsh
 
+      - name: Install WezTerm runtime
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          brew install --cask wezterm
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10.23.0

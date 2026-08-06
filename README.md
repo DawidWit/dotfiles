@@ -4,7 +4,7 @@ Chezmoi-managed terminal and editor configuration for macOS and Linux. It includ
 
 ## Requirements
 
-Use macOS or Linux; Windows is unsupported. Bootstrap requires Homebrew on macOS or Linuxbrew on Linux, plus a cloned Chezmoi source directory. On a fresh Linux machine, install Linuxbrew first with its official noninteractive installer.
+Use macOS or Linux; Windows is unsupported. Bootstrap requires Homebrew on macOS or Linuxbrew on Linux, plus a cloned Chezmoi source directory. The macOS bootstrap installs the WezTerm and JetBrains Mono Nerd Font casks as well as the shared CLI toolchain. On Linux, bootstrap installs the CLI tools and managed configuration only; install WezTerm separately from your distribution or the upstream project, and install JetBrains Mono Nerd Font separately from your distribution or Nerd Fonts.
 
 ## First run
 
@@ -15,7 +15,7 @@ DOTFILES_SOURCE_DIR="$PWD" \
   bash "$PWD/dot_local/bin/executable_dotfiles-bootstrap"
 ```
 
-`dotfiles-bootstrap` is intentionally the only command that installs packages, refreshes externals, installs the pinned Node tooling, generates agent rules, and runs the doctor. It is safe to rerun.
+`dotfiles-bootstrap` records the current clone as Chezmoi's source and is intentionally the only command that installs packages. Its explicitly gated apply fetches the pinned shell and tmux externals, then it installs the pinned Node tooling, generates agent rules, and runs the doctor. It is safe to rerun.
 
 ## Daily use
 
@@ -25,7 +25,7 @@ Apply configuration changes without provisioning software:
 chezmoi apply
 ```
 
-Update source changes with your normal Git workflow, then apply them. Routine `chezmoi apply` never installs packages or refreshes external dependencies.
+Plain `chezmoi apply` uses the source recorded during bootstrap. Update that clone with your normal Git workflow, then apply it. The external manifest is disabled unless bootstrap sets `DOTFILES_BOOTSTRAP_EXTERNALS=1`, so routine apply neither downloads externals nor installs packages. Rerun `dotfiles-bootstrap` when you intentionally want to provision or refresh dependencies.
 
 Local WezTerm backgrounds stay local: place assets at `~/.config/wezterm/backgrounds/background*.*`. They are ignored by Git and Chezmoi. A newly started WezTerm process deliberately resets its selection to the configured default background.
 
