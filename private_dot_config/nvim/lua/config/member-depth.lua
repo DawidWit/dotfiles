@@ -112,6 +112,11 @@ function M.highlight(buf)
   walk(tree:root())
 end
 
+local function highlight_now(buf)
+  pending[buf] = (pending[buf] or 0) + 1
+  M.highlight(buf)
+end
+
 function M.schedule(buf)
   buf = buf or vim.api.nvim_get_current_buf()
   local generation = (pending[buf] or 0) + 1
@@ -142,7 +147,7 @@ function M.setup()
   vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost" }, {
     group = group,
     callback = function(event)
-      M.highlight(event.buf)
+      highlight_now(event.buf)
     end,
   })
 
@@ -163,7 +168,7 @@ function M.setup()
   -- Buffers already open when this loads (VeryLazy fires after the first BufEnter).
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_loaded(buf) then
-      M.highlight(buf)
+      highlight_now(buf)
     end
   end
 end
