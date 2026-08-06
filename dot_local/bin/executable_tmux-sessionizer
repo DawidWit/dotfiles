@@ -22,6 +22,44 @@ session_exists() {
   command tmux has-session -t "$1" 2>/dev/null
 }
 
+tmux_sessions() {
+  if [ "${TMUX_SESSIONIZER_SESSIONS+x}" = x ]; then
+    printf '%s\n' "$TMUX_SESSIONIZER_SESSIONS"
+  else
+    command tmux list-sessions -F '#{session_name}' 2>/dev/null || true
+  fi
+}
+
+zoxide_projects() {
+  if [ "${TMUX_SESSIONIZER_PROJECTS+x}" = x ]; then
+    printf '%s\n' "$TMUX_SESSIONIZER_PROJECTS"
+  else
+    zoxide query -l 2>/dev/null || true
+  fi
+}
+
+session_choices() {
+  local sessions projects session project
+  sessions=$(tmux_sessions)
+  projects=$(zoxide_projects)
+
+  {
+    while IFS= read -r session; do
+      [ -n "$session" ] || continue
+      printf '%s\tsession\t%s\n' "$session" "$session"
+    done <<EOF
+$sessions
+EOF
+
+    while IFS= read -r project; do
+      [ -n "$project" ] || continue
+      printf '%s\tproject\t%s\n' "$(session_name "$project")" "$project"
+    done <<EOF
+$projects
+EOF
+  } | awk -F '\t' '!seen[$1]++ { print $2 "\t" $3 }'
+}
+
 require_command() {
   command -v "$1" >/dev/null 2>&1 || {
     printf 'tmux-sessionizer: required command not found: %s\n' "$1" >&2
@@ -30,26 +68,55 @@ require_command() {
 }
 
 main() {
-  local selected session
+  local choices selected session
 
-  if [ -n "${TMUX_SESSIONIZER_SELECTION:-}" ]; then
-    selected=$TMUX_SESSIONIZER_SELECTION
-  else
+  if [ "${TMUX_SESSIONIZER_SELECTION+x}" != x ]; then
     require_command tmux
     require_command fzf
     require_command zoxide
-    selected=$(zoxide query -l | fzf --prompt='project> ' --height=80% --reverse) || return 0
   fi
 
-  if [ ! -d "$selected" ]; then
-    printf 'tmux-sessionizer: not a directory: %s\n' "$selected" >&2
-    return 1
+  choices=$(session_choices)
+  if [ -n "${TMUX_SESSIONIZER_CHOICES_LOG:-}" ]; then
+    printf '%s\n' "$choices" >"$TMUX_SESSIONIZER_CHOICES_LOG"
   fi
 
-  session=$(session_name "$selected")
-  if ! session_exists "$session"; then
-    tmux_call new-session -d -s "$session" -c "$selected"
+  if [ "${TMUX_SESSIONIZER_SELECTION+x}" = x ]; then
+    selected=$TMUX_SESSIONIZER_SELECTION
+  else
+    selected=$(printf '%s\n' "$choices" | fzf --prompt='project> ' --height=80% --reverse --delimiter=$'\t' --with-nth=2..) || return 0
   fi
+
+  [ -n "$selected" ] || return 0
+  case $'\n'"$choices"$'\n' in
+    *$'\n'"$selected"$'\n'*) ;;
+    *)
+      printf 'tmux-sessionizer: unavailable selection: %s\n' "$selected" >&2
+      return 1
+      ;;
+  esac
+
+  case "$selected" in
+    session$'\t'*)
+      session=${selected#*$'\t'}
+      ;;
+    project$'\t'*)
+      selected=${selected#*$'\t'}
+      if [ ! -d "$selected" ]; then
+        printf 'tmux-sessionizer: not a directory: %s\n' "$selected" >&2
+        return 1
+      fi
+
+      session=$(session_name "$selected")
+      if ! session_exists "$session"; then
+        tmux_call new-session -d -s "$session" -c "$selected"
+      fi
+      ;;
+    *)
+      printf 'tmux-sessionizer: invalid selection: %s\n' "$selected" >&2
+      return 1
+      ;;
+  esac
 
   if [ -n "${TMUX:-}" ]; then
     tmux_call switch-client -t "$session"
