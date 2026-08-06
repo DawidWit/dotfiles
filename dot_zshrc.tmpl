@@ -3,7 +3,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
 fi
 
 typeset -U path PATH
-path=("$HOME/.local/bin" "$HOME/.safe-chain/shims" $path)
+path=("$HOME/.local/bin" "$HOME/.safe-chain/shims" "$HOME/.npm-global/bin" $path)
 
 export EDITOR=nvim
 export VISUAL=nvim
