@@ -25,7 +25,6 @@ esac
 
 assert_contains "$zshrc" 'source "$HOME/.config/zsh/aliases.zsh"'
 assert_contains "$zshrc" 'source "$HOME/.config/zsh/integrations.zsh"'
-assert_contains "$zshrc" 'source "$HOME/.config/zsh/kompas.zsh"'
 
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
@@ -67,7 +66,6 @@ printf '%s\n' \
 printf '%s\n' 'print -r -- p10k >> "$ZSH_LOAD_LOG"' >"$load_home/.p10k.zsh"
 printf '%s\n' 'print -r -- aliases >> "$ZSH_LOAD_LOG"' >"$load_home/.config/zsh/aliases.zsh"
 printf '%s\n' 'print -r -- integrations >> "$ZSH_LOAD_LOG"' >"$load_home/.config/zsh/integrations.zsh"
-printf '%s\n' 'print -r -- kompas >> "$ZSH_LOAD_LOG"' >"$load_home/.config/zsh/kompas.zsh"
 
 if ! missing_plugin_output=$(HOME="$load_home" ZSH_LOAD_LOG="$load_log" zsh -dfc "$zshrc" 2>&1); then
   printf '%s\n' "$missing_plugin_output" >&2
@@ -77,8 +75,7 @@ missing_plugin_order=$(<"$load_log")
 assert_eq 'omz:git,zsh-autosuggestions,zsh-interactive-cd
 p10k
 aliases
-integrations
-kompas' "$missing_plugin_order"
+integrations' "$missing_plugin_order"
 
 printf '%s\n' 'print -r -- syntax-highlighting >> "$ZSH_LOAD_LOG"' \
   >"$load_home/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
@@ -89,7 +86,6 @@ assert_eq 'omz:git,zsh-autosuggestions,zsh-interactive-cd
 p10k
 aliases
 integrations
-kompas
 syntax-highlighting' "$load_order"
 
 pass 'rendered shell configuration is portable and loads modular files'

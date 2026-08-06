@@ -42,7 +42,6 @@ fi
 
 assert_contains "$output" '.config/zsh/aliases.zsh'
 assert_contains "$output" '.config/zsh/integrations.zsh'
-assert_contains "$output" '.config/zsh/kompas.zsh'
 assert_not_contains "$output" 'diff --git a/.oh-my-zsh'
 assert_not_contains "$output" 'diff --git a/.tmux/plugins/tpm'
 assert_not_contains "$output" 'github.com/ohmyzsh'

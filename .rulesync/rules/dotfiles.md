@@ -21,7 +21,7 @@ This is a Chezmoi source repository for a personal macOS and Linux development e
 - Preserve the intentional WezTerm behavior that resets the selected background to the configured default whenever a new WezTerm process starts.
 - Keep Bash scripts compatible with macOS Bash 3.2.
 - Do not reintroduce unconditional AI permission bypasses, broad process-pattern kills, or tmux pane-content archive inspection.
-- Never manage or infer existing local WezTerm backgrounds. Tests must use temporary homes and caches and must not contact weather or Kompas services.
+- Never manage or infer existing local WezTerm backgrounds. Tests must use temporary homes and caches and must not contact weather services.
 
 ## Agent-maintained files
 
