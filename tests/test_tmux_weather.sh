@@ -40,4 +40,42 @@ wait "$second_pid"
 assert_eq '☂ 12°C' "$(<"$concurrent_cache/tmux-weather/data")"
 [ ! -d "$concurrent_cache/tmux-weather/lock" ] || fail 'weather cache lock was not removed'
 
+wait_for_path() {
+  local file attempts
+  file="$1"
+  attempts=0
+  while [ ! -e "$file" ]; do
+    attempts=$((attempts + 1))
+    [ "$attempts" -le 100 ] || fail "timed out waiting for $file"
+    "$system_sleep" 0.01
+  done
+}
+
+reclaim_cache="$tmp_dir/reclaim-cache"
+reclaim_dir="$reclaim_cache/tmux-weather"
+reclaim_lock="$reclaim_dir/lock"
+control_dir="$tmp_dir/reclaim-control"
+mkdir -p "$reclaim_lock" "$control_dir"
+printf '%s' "$(( $(date +%s) - 61 ))" >"$reclaim_lock/created"
+printf '%s' '☀ 8°C' >"$reclaim_dir/data"
+
+system_rm=$(command -v rm)
+system_mv=$(command -v mv)
+system_sleep=$(command -v sleep)
+race_path="$repo/tests/fixtures/tmux-weather-reclaim-race"
+
+PATH="$race_path:$PATH" TMUX_WEATHER_SYSTEM_RM="$system_rm" TMUX_WEATHER_SYSTEM_MV="$system_mv" TMUX_WEATHER_SYSTEM_SLEEP="$system_sleep" TMUX_WEATHER_RECLAIM_CONTROL_DIR="$control_dir" TMUX_WEATHER_TEST_LABEL=one TMUX_WEATHER_TEST_LOCK="$reclaim_lock" XDG_CACHE_HOME="$reclaim_cache" TMUX_WEATHER_RAW='Sunny:+8°C' TMUX_WEATHER_FETCH_DELAY=1 bash "$weather" >"$tmp_dir/reclaimer-one-output" &
+reclaimer_one_pid=$!
+wait_for_path "$control_dir/first-claim"
+
+PATH="$race_path:$PATH" TMUX_WEATHER_SYSTEM_RM="$system_rm" TMUX_WEATHER_SYSTEM_MV="$system_mv" TMUX_WEATHER_SYSTEM_SLEEP="$system_sleep" TMUX_WEATHER_RECLAIM_CONTROL_DIR="$control_dir" TMUX_WEATHER_TEST_LABEL=two TMUX_WEATHER_TEST_LOCK="$reclaim_lock" XDG_CACHE_HOME="$reclaim_cache" TMUX_WEATHER_RAW='Sunny:+8°C' TMUX_WEATHER_FETCH_DELAY=1 bash "$weather" >"$tmp_dir/reclaimer-two-output" &
+reclaimer_two_pid=$!
+wait "$reclaimer_two_pid"
+[ ! -f "$control_dir/fetch-two" ] || fail 'stale-lock reclaimer started a second active fetch'
+
+: >"$control_dir/release-first-claim"
+wait_for_path "$control_dir/fetch-one"
+: >"$control_dir/release-fetch-one"
+wait "$reclaimer_one_pid"
+
 pass 'tmux weather caches complete readings safely across concurrent refreshes'

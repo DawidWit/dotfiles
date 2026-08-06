@@ -20,6 +20,7 @@ CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tmux-weather"
 DATA="$CACHE_DIR/data"
 STAMP="$CACHE_DIR/last-attempt"
 LOCK="$CACHE_DIR/lock"
+RECLAIM_LOCK="$CACHE_DIR/reclaim"
 OK_INTERVAL=1200  # refresh a good reading every 20 min
 RETRY_INTERVAL=60 # retry a failed one after 1 min
 
@@ -98,9 +99,18 @@ lock_is_stale() {
 }
 
 lock_acquired=0
+reclaim_acquired=0
+quarantine_owned=0
+LOCK_QUARANTINE="${LOCK}.stale.$$"
 release_lock() {
   if [ "$lock_acquired" -eq 1 ] && [ "$(cat "$LOCK/owner" 2>/dev/null || :)" = "$$" ]; then
     rm -rf "$LOCK"
+  fi
+  if [ "$quarantine_owned" -eq 1 ]; then
+    rm -rf "$LOCK_QUARANTINE"
+  fi
+  if [ "$reclaim_acquired" -eq 1 ] && [ "$(cat "$RECLAIM_LOCK/owner" 2>/dev/null || :)" = "$$" ]; then
+    rm -rf "$RECLAIM_LOCK"
   fi
 }
 
@@ -113,8 +123,23 @@ case "$last" in
 esac
 
 if ((now - last >= OK_INTERVAL)); then
+  trap release_lock EXIT HUP INT TERM
+
   if [ -d "$LOCK" ] && lock_is_stale; then
-    rm -rf "$LOCK"
+    if ! mkdir "$RECLAIM_LOCK" 2>/dev/null; then
+      cat "$DATA" 2>/dev/null
+      exit 0
+    fi
+
+    printf '%s' "$$" >"$RECLAIM_LOCK/owner"
+    reclaim_acquired=1
+    if [ -d "$LOCK" ] && lock_is_stale; then
+      if mv "$LOCK" "$LOCK_QUARANTINE" 2>/dev/null; then
+        quarantine_owned=1
+        rm -rf "$LOCK_QUARANTINE"
+        quarantine_owned=0
+      fi
+    fi
   fi
 
   if ! mkdir "$LOCK" 2>/dev/null; then
@@ -125,7 +150,10 @@ if ((now - last >= OK_INTERVAL)); then
   printf '%s' "$now" >"$LOCK/created"
   printf '%s' "$$" >"$LOCK/owner"
   lock_acquired=1
-  trap release_lock EXIT HUP INT TERM
+  if [ "$reclaim_acquired" -eq 1 ]; then
+    rm -rf "$RECLAIM_LOCK"
+    reclaim_acquired=0
+  fi
 
   if fresh=$(fetch); then
     write_cache_file "$DATA" "$fresh"

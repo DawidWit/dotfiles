@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+if [ "$1" = "$TMUX_WEATHER_TEST_LOCK" ]; then
+  if mkdir "$TMUX_WEATHER_RECLAIM_CONTROL_DIR/first-claim" 2>/dev/null; then
+    while [ ! -f "$TMUX_WEATHER_RECLAIM_CONTROL_DIR/release-first-claim" ]; do
+      "$TMUX_WEATHER_SYSTEM_SLEEP" 0.01
+    done
+  fi
+fi
+
+exec "$TMUX_WEATHER_SYSTEM_MV" "$@"

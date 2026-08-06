@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+printf 'sleep %s\n' "$TMUX_WEATHER_TEST_LABEL" >>"$TMUX_WEATHER_RECLAIM_CONTROL_DIR/events"
+
+if [ "$TMUX_WEATHER_TEST_LABEL" = 'one' ]; then
+  : >"$TMUX_WEATHER_RECLAIM_CONTROL_DIR/fetch-one"
+  while [ ! -f "$TMUX_WEATHER_RECLAIM_CONTROL_DIR/release-fetch-one" ]; do
+    "$TMUX_WEATHER_SYSTEM_SLEEP" 0.01
+  done
+else
+  : >"$TMUX_WEATHER_RECLAIM_CONTROL_DIR/fetch-two"
+fi
