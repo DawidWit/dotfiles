@@ -1,2 +1,22 @@
 .config/wezterm/backgrounds/background*.*
 .oh-my-zsh/cache/
+
+# Repository infrastructure, not home-directory targets
+AGENTS.md
+Brewfile
+CLAUDE.md
+GEMINI.md
+LICENSE
+README.md
+package.json
+pnpm-lock.yaml
+rulesync.jsonc
+.git/
+.github/
+.gitignore
+.rulesync/
+.superpowers/
+.worktrees/
+docs/
+node_modules/
+tests/
