@@ -5,6 +5,15 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 suite_tmp_dir=$(mktemp -d)
 trap 'rm -rf "$suite_tmp_dir"' EXIT
 
+# Safe-chain package-manager shims de-loop by stripping "$HOME/.safe-chain/shims"
+# from PATH at call time; once the suite overrides HOME below that strip stops
+# matching and pnpm recurses through the shim forever. Drop the shim dir now,
+# while HOME still points at the real home.
+PATH=${PATH//":$HOME/.safe-chain/shims:"/:}
+PATH=${PATH#"$HOME/.safe-chain/shims:"}
+PATH=${PATH%":$HOME/.safe-chain/shims"}
+export PATH
+
 export HOME="$suite_tmp_dir/home"
 export XDG_CACHE_HOME="$suite_tmp_dir/cache"
 export XDG_CONFIG_HOME="$suite_tmp_dir/config"
