@@ -25,7 +25,7 @@ This is a Chezmoi source repository for a personal macOS and Linux development e
 
 ## Agent-maintained files
 
-- This file is the canonical RuleSync source. Regenerate committed `AGENTS.md` and `CLAUDE.md` with `pnpm rules:generate`; do not edit generated outputs directly.
+- `.rulesync/rules/dotfiles.md` is the canonical RuleSync source. `AGENTS.md` and `CLAUDE.md` are generated, committed outputs; regenerate them with `pnpm rules:generate` and never edit them directly.
 - Generate only the `agentsmd`, `codexcli`, and `claudecode` targets. Do not add a `GEMINI.md` target or output.
 - `docs/superpowers/` contains local planning/specification artifacts only. It must remain local-only and must never be committed.
 

@@ -11,8 +11,8 @@ Use macOS or Linux; Windows is unsupported. Bootstrap requires Homebrew on macOS
 Clone this repository as your Chezmoi source, then run the explicit provisioning command from that source directory:
 
 ```bash
-DOTFILES_SOURCE_DIR="$HOME/.local/share/chezmoi" \
-  bash "$HOME/.local/share/chezmoi/dot_local/bin/executable_dotfiles-bootstrap"
+DOTFILES_SOURCE_DIR="$PWD" \
+  bash "$PWD/dot_local/bin/executable_dotfiles-bootstrap"
 ```
 
 `dotfiles-bootstrap` is intentionally the only command that installs packages, refreshes externals, installs the pinned Node tooling, generates agent rules, and runs the doctor. It is safe to rerun.

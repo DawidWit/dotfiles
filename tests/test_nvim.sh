@@ -13,19 +13,29 @@ data_dir="$tmp_dir/data"
 state_dir="$tmp_dir/state"
 cache_dir="$tmp_dir/cache"
 config_dir="$tmp_dir/config"
-installed_lazy_dir="${XDG_DATA_HOME:-$HOME/.local/share}/nvim/lazy"
 caller_config_dir="$tmp_dir/caller-config"
+bin_dir="$tmp_dir/bin"
+network_log="$tmp_dir/network.log"
+fixture_lazy_dir="$repo/tests/fixtures/lazy.nvim"
 
-[ -d "$installed_lazy_dir/lazy.nvim" ] || fail "missing installed lazy.nvim at $installed_lazy_dir"
+[ -f "$fixture_lazy_dir/lua/lazy/init.lua" ] || fail 'missing committed lazy.nvim smoke fixture'
 
 mkdir -p \
   "$home_dir" \
   "$source_dir/private_dot_config" \
-  "$data_dir/nvim" \
+  "$data_dir/nvim/lazy" \
   "$state_dir" \
   "$cache_dir" \
   "$config_dir" \
-  "$caller_config_dir/chezmoi"
+  "$caller_config_dir/chezmoi" \
+  "$bin_dir"
+for command_name in git curl; do
+  printf '%s\n' \
+    '#!/usr/bin/env bash' \
+    'printf "%s|%s\n" "${0##*/}" "$*" >>"$DOTFILES_NETWORK_LOG"' \
+    'exit 99' >"$bin_dir/$command_name"
+  chmod +x "$bin_dir/$command_name"
+done
 printf 'invalid = [\n' >"$caller_config_dir/chezmoi/chezmoi.toml"
 export XDG_CONFIG_HOME="$caller_config_dir"
 
@@ -38,7 +48,7 @@ env \
   XDG_STATE_HOME="$state_dir" \
   XDG_CACHE_HOME="$cache_dir" \
   chezmoi --source "$source_dir" --destination "$home_dir" apply
-ln -s "$installed_lazy_dir" "$data_dir/nvim/lazy"
+cp -R "$fixture_lazy_dir" "$data_dir/nvim/lazy/lazy.nvim"
 
 env \
   HOME="$home_dir" \
@@ -46,6 +56,8 @@ env \
   XDG_DATA_HOME="$data_dir" \
   XDG_STATE_HOME="$state_dir" \
   XDG_CACHE_HOME="$cache_dir" \
+  PATH="$bin_dir:$PATH" \
+  DOTFILES_NETWORK_LOG="$network_log" \
   nvim --clean --headless \
   --cmd "set rtp+=$home_dir/.config/nvim" \
   -l "$repo/tests/nvim/member_depth_spec.lua"
@@ -56,10 +68,13 @@ env \
   XDG_DATA_HOME="$data_dir" \
   XDG_STATE_HOME="$state_dir" \
   XDG_CACHE_HOME="$cache_dir" \
+  PATH="$bin_dir:$PATH" \
+  DOTFILES_NETWORK_LOG="$network_log" \
   nvim --headless \
-  --cmd "lua local root = vim.env.XDG_DATA_HOME .. '/nvim/lazy/lazy.nvim/lua/'; package.path = root .. '?.lua;' .. root .. '?/init.lua;' .. package.path; local lazy = require('lazy'); local setup = lazy.setup; lazy.setup = function(opts) opts.install = opts.install or {}; opts.install.missing = false; opts.checker = opts.checker or {}; opts.checker.enabled = false; return setup(opts) end" \
   --cmd 'let g:dotfiles_nvim_smoke = 1' \
   -c "luafile $repo/tests/nvim/member_depth_spec.lua" \
   -c 'qa!'
+
+[ ! -s "$network_log" ] || fail "Neovim smoke attempted network access: $(<"$network_log")"
 
 pass 'Neovim starts headlessly with custom explorer and picker specs'

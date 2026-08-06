@@ -36,12 +36,6 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Prepare Neovim smoke dependency
-        shell: bash
-        run: |
-          mkdir -p "$HOME/.local/share/nvim/lazy"
-          git clone --depth=1 https://github.com/folke/lazy.nvim.git "$HOME/.local/share/nvim/lazy/lazy.nvim"
-
       - name: Validate source
         shell: bash
         run: |
