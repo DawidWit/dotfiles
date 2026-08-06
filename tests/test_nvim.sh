@@ -14,12 +14,29 @@ state_dir="$tmp_dir/state"
 cache_dir="$tmp_dir/cache"
 config_dir="$tmp_dir/config"
 installed_lazy_dir="${XDG_DATA_HOME:-$HOME/.local/share}/nvim/lazy"
+caller_config_dir="$tmp_dir/caller-config"
 
 [ -d "$installed_lazy_dir/lazy.nvim" ] || fail "missing installed lazy.nvim at $installed_lazy_dir"
 
-mkdir -p "$home_dir" "$source_dir/private_dot_config" "$data_dir/nvim" "$state_dir" "$cache_dir" "$config_dir"
+mkdir -p \
+  "$home_dir" \
+  "$source_dir/private_dot_config" \
+  "$data_dir/nvim" \
+  "$state_dir" \
+  "$cache_dir" \
+  "$config_dir" \
+  "$caller_config_dir/chezmoi"
+printf 'invalid = [\n' >"$caller_config_dir/chezmoi/chezmoi.toml"
+export XDG_CONFIG_HOME="$caller_config_dir"
+
 cp -R "$repo/private_dot_config/nvim" "$source_dir/private_dot_config/nvim"
-chezmoi --source "$source_dir" --destination "$home_dir" apply
+env \
+  HOME="$home_dir" \
+  XDG_CONFIG_HOME="$config_dir" \
+  XDG_DATA_HOME="$data_dir" \
+  XDG_STATE_HOME="$state_dir" \
+  XDG_CACHE_HOME="$cache_dir" \
+  chezmoi --source "$source_dir" --destination "$home_dir" apply
 ln -s "$installed_lazy_dir" "$data_dir/nvim/lazy"
 
 env \
