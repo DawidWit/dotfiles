@@ -96,6 +96,6 @@ local deleted_buf = vim.api.nvim_create_buf(false, true)
 member_depth.schedule(deleted_buf)
 vim.api.nvim_buf_delete(deleted_buf, { force = true })
 vim.wait(300)
-assert(calls_by_buf[deleted_buf] == nil, "deleted buffer was highlighted")
+assert(reload_calls[deleted_buf] == nil, "deleted buffer was highlighted")
 
 print("PASS: member-depth-debounce")
