@@ -16,7 +16,8 @@ output=$(DOTFILES_SOURCE_DIR="$source_dir" DOTFILES_TEST_OS=Darwin bash "$repo/d
 escaped_source_dir=$(printf '%q' "$source_dir")
 assert_contains "$output" 'brew bundle --file'
 assert_contains "$output" "$escaped_source_dir/Brewfile"
-assert_contains "$output" "chezmoi --source $escaped_source_dir --refresh-externals apply"
+assert_contains "$output" "chezmoi --source $escaped_source_dir --no-tty init"
+assert_contains "$output" "env DOTFILES_BOOTSTRAP_EXTERNALS=1 chezmoi --source $escaped_source_dir --refresh-externals apply"
 assert_contains "$output" "pnpm --dir $escaped_source_dir install --frozen-lockfile"
 assert_contains "$output" "pnpm --dir $escaped_source_dir rules:generate"
 assert_contains "$output" 'dotfiles-doctor'
@@ -46,7 +47,7 @@ for command_name in chezmoi pnpm; do
   recorder="$fallback_bin_dir/$command_name"
   printf '%s\n' \
     '#!/usr/bin/env bash' \
-    'printf "%s|%s|%s\n" "${0##*/}" "$*" "$PATH" >>"$DOTFILES_TEST_LOG"' >"$recorder"
+    'printf "%s|%s|%s|%s\n" "${0##*/}" "$*" "$PATH" "${DOTFILES_BOOTSTRAP_EXTERNALS:-}" >>"$DOTFILES_TEST_LOG"' >"$recorder"
   chmod +x "$recorder"
 done
 
@@ -66,7 +67,8 @@ HOME="$test_home" PATH=/usr/bin:/bin DOTFILES_SOURCE_DIR="$source_dir" DOTFILES_
   DOTFILES_TEST_NODE_PREFIX="$node_prefix" /bin/bash "$repo/dot_local/bin/executable_dotfiles-bootstrap" >/dev/null
 recorded=$(<"$recording")
 assert_contains "$recorded" "brew|bundle --file $source_dir/Brewfile|$fallback_bin_dir:/usr/bin:/bin"
-assert_contains "$recorded" "chezmoi|--source $source_dir --refresh-externals apply"
+assert_contains "$recorded" "chezmoi|--source $source_dir --no-tty init|$node_prefix/bin:$fallback_bin_dir:/usr/bin:/bin|"
+assert_contains "$recorded" "chezmoi|--source $source_dir --refresh-externals apply|$node_prefix/bin:$fallback_bin_dir:/usr/bin:/bin|1"
 assert_contains "$recorded" "|$node_prefix/bin:$fallback_bin_dir:/usr/bin:/bin"
 assert_contains "$recorded" "pnpm|--dir $source_dir install --frozen-lockfile"
 assert_contains "$recorded" 'doctor|'

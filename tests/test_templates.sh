@@ -18,7 +18,9 @@ mkdir -p "$home_dir" "$cache_dir" "$config_dir" "$data_dir" "$state_dir" "$bin_d
 
 git -C "$repo" archive HEAD | tar -x -C "$source_dir"
 cp "$repo/.chezmoiignore" "$source_dir/.chezmoiignore"
-mkdir -p "$source_dir/docs/superpowers" "$source_dir/node_modules/example-package" "$source_dir/.superpowers" "$source_dir/.worktrees"
+cp "$repo/.chezmoi.toml.tmpl" "$source_dir/.chezmoi.toml.tmpl"
+cp "$repo/.chezmoiexternal.toml.tmpl" "$source_dir/.chezmoiexternal.toml.tmpl"
+mkdir -p "$source_dir/.git" "$source_dir/docs/superpowers" "$source_dir/node_modules/example-package" "$source_dir/.superpowers" "$source_dir/.worktrees"
 printf '%s\n' 'local plan fixture' >"$source_dir/docs/superpowers/private-plan.md"
 printf '%s\n' 'module fixture' >"$source_dir/node_modules/example-package/index.js"
 printf '%s\n' 'local agent fixture' >"$source_dir/.superpowers/private-note.md"
@@ -29,12 +31,19 @@ for installer in brew pnpm; do
   chmod +x "$bin_dir/$installer"
 done
 
+HOME="$home_dir" \
+XDG_CACHE_HOME="$cache_dir" \
+XDG_CONFIG_HOME="$config_dir" \
+XDG_DATA_HOME="$data_dir" \
+XDG_STATE_HOME="$state_dir" \
+chezmoi --source "$source_dir" --no-tty init
+
 managed_output=$(HOME="$home_dir" \
   XDG_CACHE_HOME="$cache_dir" \
   XDG_CONFIG_HOME="$config_dir" \
   XDG_DATA_HOME="$data_dir" \
   XDG_STATE_HOME="$state_dir" \
-  chezmoi --source "$source_dir" --destination "$home_dir" --no-tty --exclude externals managed --path-style=relative)
+  chezmoi --destination "$home_dir" --no-tty managed --path-style=relative)
 
 while IFS= read -r target; do
   case "$target" in
@@ -53,7 +62,11 @@ XDG_DATA_HOME="$data_dir" \
 XDG_STATE_HOME="$state_dir" \
 PATH="$bin_dir:$PATH" \
 DOTFILES_INSTALL_LOG="$install_log" \
-chezmoi --source "$source_dir" --destination "$home_dir" --no-tty --refresh-externals=never --exclude externals apply
+HTTP_PROXY=http://127.0.0.1:9 \
+HTTPS_PROXY=http://127.0.0.1:9 \
+ALL_PROXY=http://127.0.0.1:9 \
+NO_PROXY= \
+chezmoi --destination "$home_dir" --no-tty apply
 
 for repo_path in AGENTS.md Brewfile CLAUDE.md GEMINI.md LICENSE README.md package.json pnpm-lock.yaml rulesync.jsonc \
   .git .github .gitignore .rulesync .superpowers .worktrees docs node_modules tests; do

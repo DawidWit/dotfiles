@@ -109,8 +109,9 @@ main() {
   if [ "$dry_run" = false ] && node_prefix=$("$brew_bin" --prefix node@22 2>/dev/null) && [ -d "$node_prefix/bin" ]; then
     prepend_path "$node_prefix/bin"
   fi
+  say_run chezmoi --source "$source_dir" --no-tty init
   say_run install -d -m 700 "$HOME/.local/share/tmux/resurrect"
-  say_run chezmoi --source "$source_dir" --refresh-externals apply
+  say_run env DOTFILES_BOOTSTRAP_EXTERNALS=1 chezmoi --source "$source_dir" --refresh-externals apply
   printf '# pnpm install --frozen-lockfile (in DOTFILES_SOURCE_DIR)\n'
   say_run pnpm --dir "$source_dir" install --frozen-lockfile
   printf '# pnpm rules:generate (in DOTFILES_SOURCE_DIR)\n'

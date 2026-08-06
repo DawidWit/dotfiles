@@ -1,3 +1,4 @@
+{{- if eq (env "DOTFILES_BOOTSTRAP_EXTERNALS") "1" }}
 # zsh-interactive-cd is bundled in the pinned Oh My Zsh archive below.
 [".oh-my-zsh"]
     type = "archive"
@@ -29,3 +30,4 @@
     url = "https://github.com/tmux-plugins/tpm/archive/refs/tags/v3.1.0.tar.gz"
     exact = true
     stripComponents = 1
+{{- end }}
