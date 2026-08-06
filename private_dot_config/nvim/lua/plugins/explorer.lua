@@ -24,7 +24,7 @@ return {
       sources = {
         explorer = {
           hidden = true, -- show dotfiles
-          ignored = false, -- but not what .gitignore excludes
+          ignored = true, -- show files excluded by .gitignore
           layout = { preset = "sidebar", preview = false },
           -- Badge files this branch committed vs its base branch, on top of
           -- the built-in working-tree status colors.
