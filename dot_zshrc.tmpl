@@ -15,7 +15,7 @@ setopt append_history hist_ignore_dups share_history
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME='powerlevel10k/powerlevel10k'
 zstyle ':omz:update' mode disabled
-plugins=(git zsh-autosuggestions zsh-interactive-cd zsh-syntax-highlighting)
+plugins=(git zsh-autosuggestions zsh-interactive-cd)
 if [[ -r "$ZSH/oh-my-zsh.sh" ]]; then
   source "$ZSH/oh-my-zsh.sh"
 fi
@@ -32,3 +32,7 @@ path=("$PNPM_HOME" $path)
 [[ -r "$HOME/.config/zsh/aliases.zsh" ]] && source "$HOME/.config/zsh/aliases.zsh"
 [[ -r "$HOME/.config/zsh/integrations.zsh" ]] && source "$HOME/.config/zsh/integrations.zsh"
 [[ -r "$HOME/.config/zsh/kompas.zsh" ]] && source "$HOME/.config/zsh/kompas.zsh"
+
+if [[ -r "$ZSH/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
+  source "$ZSH/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+fi

@@ -55,4 +55,41 @@ integrations=$(HOME="$tmp_dir/home" ZSH_INTEGRATIONS="$repo/private_dot_config/z
 ')
 assert_eq "$integrations" '1:1'
 
+load_home="$tmp_dir/load-home"
+load_log="$tmp_dir/zsh-load.log"
+mkdir -p \
+  "$load_home/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" \
+  "$load_home/.config/zsh"
+
+printf '%s\n' \
+  'print -r -- "omz:${(j:,:)plugins}" >> "$ZSH_LOAD_LOG"' \
+  >"$load_home/.oh-my-zsh/oh-my-zsh.sh"
+printf '%s\n' 'print -r -- p10k >> "$ZSH_LOAD_LOG"' >"$load_home/.p10k.zsh"
+printf '%s\n' 'print -r -- aliases >> "$ZSH_LOAD_LOG"' >"$load_home/.config/zsh/aliases.zsh"
+printf '%s\n' 'print -r -- integrations >> "$ZSH_LOAD_LOG"' >"$load_home/.config/zsh/integrations.zsh"
+printf '%s\n' 'print -r -- kompas >> "$ZSH_LOAD_LOG"' >"$load_home/.config/zsh/kompas.zsh"
+
+if ! missing_plugin_output=$(HOME="$load_home" ZSH_LOAD_LOG="$load_log" zsh -dfc "$zshrc" 2>&1); then
+  printf '%s\n' "$missing_plugin_output" >&2
+  fail 'zshrc failed when optional syntax highlighting was absent'
+fi
+missing_plugin_order=$(<"$load_log")
+assert_eq 'omz:git,zsh-autosuggestions,zsh-interactive-cd
+p10k
+aliases
+integrations
+kompas' "$missing_plugin_order"
+
+printf '%s\n' 'print -r -- syntax-highlighting >> "$ZSH_LOAD_LOG"' \
+  >"$load_home/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+: >"$load_log"
+HOME="$load_home" ZSH_LOAD_LOG="$load_log" zsh -dfc "$zshrc"
+load_order=$(<"$load_log")
+assert_eq 'omz:git,zsh-autosuggestions,zsh-interactive-cd
+p10k
+aliases
+integrations
+kompas
+syntax-highlighting' "$load_order"
+
 pass 'rendered shell configuration is portable and loads modular files'
