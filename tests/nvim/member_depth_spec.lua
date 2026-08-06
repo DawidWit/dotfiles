@@ -69,6 +69,29 @@ end)
 assert(calls_by_buf[buf] == 1, "pending refresh duplicated immediate highlight")
 assert(calls_by_buf[other_buf] == 1, "another buffer's pending refresh was superseded")
 
+local reload_calls = {}
+member_depth.highlight = function(target_buf)
+  reload_calls[target_buf] = (reload_calls[target_buf] or 0) + 1
+end
+member_depth.schedule(buf)
+
+package.loaded["config.member-depth"] = nil
+member_depth = require("config.member-depth")
+member_depth.highlight = function(target_buf)
+  reload_calls[target_buf] = (reload_calls[target_buf] or 0) + 1
+end
+member_depth.setup()
+
+assert(reload_calls[buf] == 1, "reload did not highlight exactly once immediately")
+vim.wait(300)
+assert(reload_calls[buf] == 1, "old module timer duplicated reload highlight")
+
+member_depth.schedule(buf)
+vim.wait(300, function()
+  return reload_calls[buf] > 1
+end)
+assert(reload_calls[buf] == 2, "future schedule did not run after reload")
+
 local deleted_buf = vim.api.nvim_create_buf(false, true)
 member_depth.schedule(deleted_buf)
 vim.api.nvim_buf_delete(deleted_buf, { force = true })

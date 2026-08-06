@@ -21,7 +21,14 @@ local groups = {
 }
 
 local ns = vim.api.nvim_create_namespace("member_depth")
-local pending = {}
+-- Hot reload replaces this module, so deferred callbacks need state that the
+-- next module instance can still supersede.
+local debounce = vim._member_depth_debounce
+if not debounce then
+  debounce = { generation = 0, pending = {} }
+  vim._member_depth_debounce = debounce
+end
+local pending = debounce.pending
 
 local filetypes = {
   javascript = true,
@@ -113,13 +120,14 @@ function M.highlight(buf)
 end
 
 local function highlight_now(buf)
-  pending[buf] = (pending[buf] or 0) + 1
+  pending[buf] = nil
   M.highlight(buf)
 end
 
 function M.schedule(buf)
   buf = buf or vim.api.nvim_get_current_buf()
-  local generation = (pending[buf] or 0) + 1
+  debounce.generation = debounce.generation + 1
+  local generation = debounce.generation
   pending[buf] = generation
 
   vim.defer_fn(function()
