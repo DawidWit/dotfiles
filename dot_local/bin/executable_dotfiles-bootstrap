@@ -4,6 +4,14 @@ set -euo pipefail
 find_brew() {
   local brew_path
 
+  if [ -n "${DOTFILES_TEST_BREW_FALLBACK:-}" ]; then
+    if [ -x "$DOTFILES_TEST_BREW_FALLBACK" ]; then
+      printf '%s\n' "$DOTFILES_TEST_BREW_FALLBACK"
+      return 0
+    fi
+    return 1
+  fi
+
   brew_path=$(command -v brew 2>/dev/null || true)
   if [ -n "$brew_path" ]; then
     printf '%s\n' "$brew_path"
@@ -20,6 +28,14 @@ find_brew() {
   return 1
 }
 
+prepend_path() {
+  case ":$PATH:" in
+    *":$1:"*) ;;
+    *) PATH="$1:$PATH" ;;
+  esac
+  export PATH
+}
+
 say_run() {
   local argument
 
@@ -34,7 +50,7 @@ say_run() {
 }
 
 main() {
-  local source_dir os_name brew_bin
+  local source_dir os_name brew_bin brew_bin_dir node_prefix
 
   dry_run=false
   if [ "$#" -gt 1 ]; then
@@ -53,6 +69,14 @@ main() {
   source_dir=${DOTFILES_SOURCE_DIR:-}
   if [ -z "$source_dir" ]; then
     printf 'DOTFILES_SOURCE_DIR must name the chezmoi source directory\n' >&2
+    return 2
+  fi
+  if [ ! -f "$source_dir/Brewfile" ]; then
+    printf 'missing bootstrap manifest: %s\n' "$source_dir/Brewfile" >&2
+    return 2
+  fi
+  if [ ! -f "$source_dir/package.json" ]; then
+    printf 'missing bootstrap manifest: %s\n' "$source_dir/package.json" >&2
     return 2
   fi
 
@@ -74,9 +98,19 @@ main() {
     brew_bin=brew
   fi
 
+  case "$brew_bin" in
+    */*)
+      brew_bin_dir=${brew_bin%/*}
+      prepend_path "$brew_bin_dir"
+      ;;
+  esac
+
   say_run "$brew_bin" bundle --file "$source_dir/Brewfile"
+  if [ "$dry_run" = false ] && node_prefix=$("$brew_bin" --prefix node@22 2>/dev/null) && [ -d "$node_prefix/bin" ]; then
+    prepend_path "$node_prefix/bin"
+  fi
   say_run install -d -m 700 "$HOME/.local/share/tmux/resurrect"
-  say_run chezmoi --refresh-externals apply
+  say_run chezmoi --source "$source_dir" --refresh-externals apply
   printf '# pnpm install --frozen-lockfile (in DOTFILES_SOURCE_DIR)\n'
   say_run pnpm --dir "$source_dir" install --frozen-lockfile
   printf '# pnpm rules:generate (in DOTFILES_SOURCE_DIR)\n'
