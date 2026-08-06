@@ -24,20 +24,84 @@ render_template() {
       execute-template <"$1"
 }
 
+semantic_color() {
+  local rendered=$1 role=$2 key=$3 relation=$4
+
+  printf '%s\n' "$rendered" | awk \
+    -v role="$role" \
+    -v key="$key" \
+    -v relation="$relation" '
+      function exact_key_position(scope, key, offset, position, candidate, previous) {
+        offset = 0
+        while ((position = index(substr(scope, offset + 1), key)) > 0) {
+          candidate = offset + position
+          previous = candidate == 1 ? "" : substr(scope, candidate - 1, 1)
+          if (candidate == 1 || previous == ",") return candidate
+          offset = candidate
+        }
+        return 0
+      }
+
+      { source = source $0 }
+
+      END {
+        gsub(/[[:space:]]/, "", source)
+        role_position = index(source, role)
+        if (!role_position) exit
+
+        if (relation == "table") {
+          scope_start = role_position + length(role)
+          depth = 1
+          for (i = scope_start; i <= length(source); i++) {
+            character = substr(source, i, 1)
+            if (character == "{") depth++
+            if (character == "}") depth--
+            if (depth == 0) break
+          }
+          if (depth != 0) exit
+          scope = substr(source, scope_start, i - scope_start)
+          key_position = exact_key_position(scope, key)
+          if (!key_position) exit
+          value = substr(scope, key_position + length(key))
+        } else if (relation == "after") {
+          scope = substr(source, role_position + length(role))
+          key_position = index(scope, key)
+          if (!key_position) exit
+          value = substr(scope, key_position + length(key))
+        } else {
+          scope = substr(source, 1, role_position - 1)
+          offset = 0
+          while ((position = index(substr(scope, offset + 1), key)) > 0) {
+            offset += position
+          }
+          if (!offset) exit
+          value = substr(scope, offset + length(key))
+        }
+
+        if (match(value, /#[[:xdigit:]]+/)) {
+          print substr(value, RSTART, RLENGTH)
+        }
+      }
+    '
+}
+
 rendered_tmux=$(render_template "$repo/dot_tmux.conf.tmpl")
-assert_contains "$rendered_tmux" "set -g status-left '#[fg=#ff9e64,bg=default,bold] #S '"
-assert_contains "$rendered_tmux" "set -g window-status-current-format '#[fg=#000000,bg=#ff9e64,bold] #I:#W '"
-assert_contains "$rendered_tmux" '#[fg=#565f89,bg=default]│'
+assert_eq '#ff9e64' "$(semantic_color "$rendered_tmux" 'set-gstatus-left' 'fg=' after)"
+assert_eq '#ff9e64' "$(semantic_color "$rendered_tmux" 'set-gwindow-status-current-format' 'bg=' after)"
+assert_eq '#565f89' "$(semantic_color "$rendered_tmux" '│' 'fg=' before)"
 
 rendered_wezterm=$(render_template "$repo/private_dot_config/wezterm/wezterm.lua.tmpl")
-assert_contains "$rendered_wezterm" $'  active_titlebar_bg = \'#0d1428\',\n  inactive_titlebar_bg = \'#16161e\','
-assert_contains "$rendered_wezterm" $'    active_tab = {\n      bg_color = \'#0d1428\',\n      fg_color = \'#c0caf5\',\n      intensity = \'Bold\',\n    },'
-assert_contains "$rendered_wezterm" $'    inactive_tab = {\n      bg_color = \'#16161e\',\n      fg_color = \'#565f89\',\n    },'
-assert_contains "$rendered_wezterm" "Foreground = { Color = '#7aa2f7' }"
-assert_contains "$rendered_wezterm" "Foreground = { Color = '#9ece6a' }"
+assert_eq '#0d1428' "$(semantic_color "$rendered_wezterm" 'config.window_frame={' 'active_titlebar_bg=' table)"
+assert_eq '#16161e' "$(semantic_color "$rendered_wezterm" 'config.window_frame={' 'inactive_titlebar_bg=' table)"
+assert_eq '#0d1428' "$(semantic_color "$rendered_wezterm" ',active_tab={' 'bg_color=' table)"
+assert_eq '#c0caf5' "$(semantic_color "$rendered_wezterm" ',active_tab={' 'fg_color=' table)"
+assert_eq '#16161e' "$(semantic_color "$rendered_wezterm" ',inactive_tab={' 'bg_color=' table)"
+assert_eq '#565f89' "$(semantic_color "$rendered_wezterm" ',inactive_tab={' 'fg_color=' table)"
+assert_eq '#7aa2f7' "$(semantic_color "$rendered_wezterm" 'Text=\047\047..workspace' 'Color=' before)"
+assert_eq '#9ece6a' "$(semantic_color "$rendered_wezterm" 'Text=date..\047\047' 'Color=' before)"
 
 rendered_nvim=$(render_template "$repo/private_dot_config/nvim/lua/plugins/palette.lua.tmpl")
-assert_contains "$rendered_nvim" $'  ["#ff9e64"] = {\n    "Conditional",'
+assert_eq '#ff9e64' "$(semantic_color "$rendered_nvim" '\"Conditional\"' '[\"' before)"
 
 rendered_gitconfig=$(env \
   HOME="$tmp_dir/home" \
