@@ -2,15 +2,11 @@ local wezterm = require 'wezterm'
 local act = wezterm.action
 local config = wezterm.config_builder()
 
-{{ if eq .chezmoi.os "darwin" -}}
 local inherited_path = os.getenv 'PATH' or '/usr/bin:/bin:/usr/sbin:/sbin'
 config.set_environment_variables = {
-  PATH = '/opt/homebrew/bin:' .. inherited_path,
+  PATH = inherited_path .. ':/opt/homebrew/bin:/usr/local/bin:/home/linuxbrew/.linuxbrew/bin',
 }
-config.default_prog = { '/opt/homebrew/bin/tmux', 'new-session', '-A', '-s', 'main' }
-{{- else -}}
-config.default_prog = { '/home/linuxbrew/.linuxbrew/bin/tmux', 'new-session', '-A', '-s', 'main' }
-{{- end }}
+config.default_prog = { 'tmux', 'new-session', '-A', '-s', 'main' }
 
 
 config.font = wezterm.font_with_fallback {
