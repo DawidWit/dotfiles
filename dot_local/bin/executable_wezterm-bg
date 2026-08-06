@@ -20,10 +20,19 @@ current=$(cat "$STATE" 2>/dev/null || echo 0)
 case "$current" in
 '' | *[!0-9]*) current=0 ;;
 esac
+while [ "${current#0}" != "$current" ]; do
+  current=${current#0}
+done
+current=${current:-0}
 
 count=$(cat "$COUNT" 2>/dev/null || true)
 case "$count" in
-'' | *[!0-9]* | 0*) count= ;;
+'' | *[!0-9]*) count= ;;
+*)
+  while [ "${count#0}" != "$count" ]; do
+    count=${count#0}
+  done
+  ;;
 esac
 
 case "${1:-next}" in

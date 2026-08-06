@@ -27,8 +27,13 @@ XDG_CACHE_HOME="$tmp_dir/cache" bash "$repo/dot_local/bin/executable_wezterm-bg"
 assert_eq "$(<"$state_dir/current")" '3'
 
 printf '08' >"$state_dir/count"
-printf '2' >"$state_dir/current"
+printf '7' >"$state_dir/current"
 XDG_CACHE_HOME="$tmp_dir/cache" bash "$repo/dot_local/bin/executable_wezterm-bg" next
-assert_eq "$(<"$state_dir/current")" '3'
+assert_eq "$(<"$state_dir/current")" '0'
+
+printf '01' >"$state_dir/count"
+printf '0' >"$state_dir/current"
+XDG_CACHE_HOME="$tmp_dir/cache" bash "$repo/dot_local/bin/executable_wezterm-bg" next
+assert_eq "$(<"$state_dir/current")" '0'
 
 pass 'wezterm background cycling wraps against the configured count'
