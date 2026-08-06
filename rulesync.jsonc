@@ -1,0 +1,6 @@
+{
+  "targets": ["agentsmd", "codexcli", "claudecode"],
+  "features": ["rules"],
+  "outputRoots": ["."],
+  "delete": true
+}

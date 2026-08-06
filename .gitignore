@@ -1,3 +1,4 @@
 /private_dot_config/wezterm/backgrounds/background*.*
 /docs/superpowers/
 /.worktrees/
+/node_modules/
