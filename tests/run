@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root=$(cd "$(dirname "$0")/.." && pwd)
+if [ "$#" -gt 0 ]; then tests=("$@"); else tests=("$root"/tests/test_*.sh); fi
+for test_file in "${tests[@]}"; do bash "$test_file"; done

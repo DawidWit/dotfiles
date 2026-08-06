@@ -1,2 +1,1 @@
-# Local-only wezterm background images — never manage/commit these
-.config/wezterm/background.*
+.config/wezterm/backgrounds/background*.*
