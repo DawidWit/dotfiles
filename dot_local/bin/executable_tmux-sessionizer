@@ -89,33 +89,33 @@ main() {
 
   [ -n "$selected" ] || return 0
   case $'\n'"$choices"$'\n' in
-    *$'\n'"$selected"$'\n'*) ;;
-    *)
-      printf 'tmux-sessionizer: unavailable selection: %s\n' "$selected" >&2
-      return 1
-      ;;
+  *$'\n'"$selected"$'\n'*) ;;
+  *)
+    printf 'tmux-sessionizer: unavailable selection: %s\n' "$selected" >&2
+    return 1
+    ;;
   esac
 
   case "$selected" in
-    session$'\t'*)
-      session=${selected#*$'\t'}
-      ;;
-    project$'\t'*)
-      selected=${selected#*$'\t'}
-      if [ ! -d "$selected" ]; then
-        printf 'tmux-sessionizer: not a directory: %s\n' "$selected" >&2
-        return 1
-      fi
-
-      session=$(session_name "$selected")
-      if ! session_exists "$session"; then
-        tmux_call new-session -d -s "$session" -c "$selected"
-      fi
-      ;;
-    *)
-      printf 'tmux-sessionizer: invalid selection: %s\n' "$selected" >&2
+  session$'\t'*)
+    session=${selected#*$'\t'}
+    ;;
+  project$'\t'*)
+    selected=${selected#*$'\t'}
+    if [ ! -d "$selected" ]; then
+      printf 'tmux-sessionizer: not a directory: %s\n' "$selected" >&2
       return 1
-      ;;
+    fi
+
+    session=$(session_name "$selected")
+    if ! session_exists "$session"; then
+      tmux_call new-session -d -s "$session" -c "$selected"
+    fi
+    ;;
+  *)
+    printf 'tmux-sessionizer: invalid selection: %s\n' "$selected" >&2
+    return 1
+    ;;
   esac
 
   if [ -n "${TMUX:-}" ]; then

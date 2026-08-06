@@ -30,8 +30,8 @@ find_brew() {
 
 prepend_path() {
   case ":$PATH:" in
-    *":$1:"*) ;;
-    *) PATH="$1:$PATH" ;;
+  *":$1:"*) ;;
+  *) PATH="$1:$PATH" ;;
   esac
   export PATH
 }
@@ -58,12 +58,12 @@ main() {
     return 2
   fi
   case "${1:-}" in
-    '') ;;
-    --dry-run) dry_run=true ;;
-    *)
-      printf 'usage: dotfiles-bootstrap [--dry-run]\n' >&2
-      return 2
-      ;;
+  '') ;;
+  --dry-run) dry_run=true ;;
+  *)
+    printf 'usage: dotfiles-bootstrap [--dry-run]\n' >&2
+    return 2
+    ;;
   esac
 
   source_dir=${DOTFILES_SOURCE_DIR:-}
@@ -82,11 +82,11 @@ main() {
 
   os_name=${DOTFILES_TEST_OS:-$(uname -s)}
   case "$os_name" in
-    Darwin|Linux) ;;
-    *)
-      printf 'unsupported operating system: %s\n' "$os_name" >&2
-      return 1
-      ;;
+  Darwin | Linux) ;;
+  *)
+    printf 'unsupported operating system: %s\n' "$os_name" >&2
+    return 1
+    ;;
   esac
 
   brew_bin=$(find_brew || true)
@@ -99,10 +99,10 @@ main() {
   fi
 
   case "$brew_bin" in
-    */*)
-      brew_bin_dir=${brew_bin%/*}
-      prepend_path "$brew_bin_dir"
-      ;;
+  */*)
+    brew_bin_dir=${brew_bin%/*}
+    prepend_path "$brew_bin_dir"
+    ;;
   esac
 
   say_run "$brew_bin" bundle --file "$source_dir/Brewfile"
