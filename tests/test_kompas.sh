@@ -9,7 +9,7 @@ trap 'rm -rf "$tmp_dir"' EXIT
 mkdir -p "$tmp_dir/kompas-backend"
 
 log="$tmp_dir/tmux.log"
-KOMPAS_SCRIPT="$repo/dot_config/zsh/kompas.zsh" \
+KOMPAS_SCRIPT="$repo/private_dot_config/zsh/kompas.zsh" \
 KOMPAS_BACKEND_REPO="$tmp_dir/kompas-backend" \
 TMUX_LOG="$log" \
 TMUX=inside \
@@ -46,7 +46,7 @@ case "$commands" in
 esac
 
 missing_repo="$tmp_dir/missing-kompas-backend"
-if missing_output=$(KOMPAS_SCRIPT="$repo/dot_config/zsh/kompas.zsh" KOMPAS_BACKEND_REPO="$missing_repo" zsh -fc '
+if missing_output=$(KOMPAS_SCRIPT="$repo/private_dot_config/zsh/kompas.zsh" KOMPAS_BACKEND_REPO="$missing_repo" zsh -fc '
   tmux() {
     print -u2 "tmux must not run for a missing repository"
     return 99
@@ -60,7 +60,7 @@ fi
 assert_contains "$missing_output" "Kompas backend repository not found: $missing_repo"
 
 no_op_log="$tmp_dir/no-op-tmux.log"
-no_op_output=$(KOMPAS_SCRIPT="$repo/dot_config/zsh/kompas.zsh" TMUX_LOG="$no_op_log" zsh -fc '
+no_op_output=$(KOMPAS_SCRIPT="$repo/private_dot_config/zsh/kompas.zsh" TMUX_LOG="$no_op_log" zsh -fc '
   tmux() {
     printf "%s\\n" "$*" >> "$TMUX_LOG"
     if [ "$1" = has-session ]; then

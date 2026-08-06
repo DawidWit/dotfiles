@@ -33,7 +33,7 @@ mkdir -p "$tmp_dir/bin" "$tmp_dir/home"
 printf '#!/usr/bin/env bash\nexit 0\n' >"$tmp_dir/bin/eza"
 chmod +x "$tmp_dir/bin/eza"
 
-aliases=$(HOME="$tmp_dir/home" PATH="$tmp_dir/bin:$PATH" ZSH_ALIASES="$repo/dot_config/zsh/aliases.zsh" zsh -fc '
+aliases=$(HOME="$tmp_dir/home" PATH="$tmp_dir/bin:$PATH" ZSH_ALIASES="$repo/private_dot_config/zsh/aliases.zsh" zsh -fc '
   source "$ZSH_ALIASES"
   alias ls
   alias ll
@@ -44,7 +44,7 @@ assert_contains "$aliases" 'll='
 assert_contains "$aliases" 'lt='
 
 printf 'FZF_SOURCE_LOADED=1\n' >"$tmp_dir/home/.fzf.zsh"
-integrations=$(HOME="$tmp_dir/home" ZSH_INTEGRATIONS="$repo/dot_config/zsh/integrations.zsh" zsh -fc '
+integrations=$(HOME="$tmp_dir/home" ZSH_INTEGRATIONS="$repo/private_dot_config/zsh/integrations.zsh" zsh -fc '
   zoxide() {
     if [[ "$1" = init && "$2" = zsh ]]; then
       print "ZOXIDE_SOURCE_LOADED=1"
