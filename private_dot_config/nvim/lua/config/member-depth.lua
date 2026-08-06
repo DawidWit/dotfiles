@@ -21,6 +21,7 @@ local groups = {
 }
 
 local ns = vim.api.nvim_create_namespace("member_depth")
+local pending = {}
 
 local filetypes = {
   javascript = true,
@@ -111,6 +112,23 @@ function M.highlight(buf)
   walk(tree:root())
 end
 
+function M.schedule(buf)
+  buf = buf or vim.api.nvim_get_current_buf()
+  local generation = (pending[buf] or 0) + 1
+  pending[buf] = generation
+
+  vim.defer_fn(function()
+    if pending[buf] ~= generation then
+      return
+    end
+    pending[buf] = nil
+
+    if vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_is_loaded(buf) then
+      M.highlight(buf)
+    end
+  end, 150)
+end
+
 function M.setup()
   define_highlights()
 
@@ -121,10 +139,24 @@ function M.setup()
     callback = define_highlights,
   })
 
-  vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "TextChanged", "TextChangedI" }, {
+  vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost" }, {
     group = group,
     callback = function(event)
       M.highlight(event.buf)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI" }, {
+    group = group,
+    callback = function(event)
+      M.schedule(event.buf)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd("BufDelete", {
+    group = group,
+    callback = function(event)
+      pending[event.buf] = nil
     end,
   })
 
