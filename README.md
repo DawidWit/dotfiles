@@ -49,7 +49,7 @@ Run the repository suite with:
 pnpm test
 ```
 
-The test suite uses temporary homes and caches, so it does not modify your user configuration or contact weather services. CI additionally checks shell and Lua formatting and syntax on macOS and Linux.
+The test suite uses temporary homes and caches, so it does not modify your user configuration or contact weather services.
 
 ## Directory map
 
