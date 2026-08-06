@@ -1,3 +1,11 @@
+set -g default-terminal "tmux-256color"
+set -as terminal-features ',xterm-256color:RGB'
+set -g set-clipboard on
+set -g history-limit 100000
+set -g renumber-windows on
+set -g base-index 1
+setw -g pane-base-index 1
+
 unbind r
 bind r source-file ~/.tmux.conf
 bind -r H resize-pane -L 5
@@ -31,8 +39,9 @@ bind = run-shell '~/.local/bin/wezterm-bg next'
 bind + run-shell '~/.local/bin/wezterm-bg prev'
 
 bind n new-window
-bind c kill-window
-bind q kill-session
+bind c confirm-before -p 'kill window #W? (y/n)' kill-window
+bind q confirm-before -p 'kill session #S? (y/n)' kill-session
+bind s display-popup -E -w 80% -h 80% '~/.local/bin/tmux-sessionizer'
 bind l choose-tree -Zs
 bind Right next-window
 bind Left previous-window
@@ -42,10 +51,10 @@ set -g @plugin 'tmux-plugins/tmux-resurrect'
 set -g @plugin 'tmux-plugins/tmux-continuum'
 
 set -g @continuum-restore 'on'
-set -g @resurrect-capture-pane-contents 'on'
+set -g @resurrect-capture-pane-contents 'off'
 set -g @resurrect-dir '~/.local/share/tmux/resurrect'
 set -g @resurrect-processes 'claude codex'
-set -g @continuum-save-interval '10'
+set -g @continuum-save-interval '60'
 set -g status-position top
 
 set -g status-style 'bg=default'

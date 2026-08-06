@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+session_name() {
+  local name
+  name=$(basename "$1" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]_-' '-' | sed 's/^-*//; s/-*$//')
+  printf '%s\n' "${name:-session}"
+}
+
+tmux_call() {
+  if [ -n "${TMUX_SESSIONIZER_TMUX_LOG:-}" ]; then
+    printf '%s\n' "$*" >>"$TMUX_SESSIONIZER_TMUX_LOG"
+  else
+    command tmux "$@"
+  fi
+}
+
+session_exists() {
+  if [ -n "${TMUX_SESSIONIZER_TMUX_LOG:-}" ]; then
+    return 1
+  fi
+  command tmux has-session -t "$1" 2>/dev/null
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || {
+    printf 'tmux-sessionizer: required command not found: %s\n' "$1" >&2
+    return 1
+  }
+}
+
+main() {
+  local selected session
+
+  if [ -n "${TMUX_SESSIONIZER_SELECTION:-}" ]; then
+    selected=$TMUX_SESSIONIZER_SELECTION
+  else
+    require_command tmux
+    require_command fzf
+    require_command zoxide
+    selected=$(zoxide query -l | fzf --prompt='project> ' --height=80% --reverse) || return 0
+  fi
+
+  if [ ! -d "$selected" ]; then
+    printf 'tmux-sessionizer: not a directory: %s\n' "$selected" >&2
+    return 1
+  fi
+
+  session=$(session_name "$selected")
+  if ! session_exists "$session"; then
+    tmux_call new-session -d -s "$session" -c "$selected"
+  fi
+
+  if [ -n "${TMUX:-}" ]; then
+    tmux_call switch-client -t "$session"
+  else
+    tmux_call attach-session -t "$session"
+  fi
+}
+
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+  main "$@"
+fi
