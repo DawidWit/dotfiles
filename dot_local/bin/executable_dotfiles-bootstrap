@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+find_brew() {
+  local brew_path
+
+  brew_path=$(command -v brew 2>/dev/null || true)
+  if [ -n "$brew_path" ]; then
+    printf '%s\n' "$brew_path"
+    return 0
+  fi
+
+  for brew_path in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    if [ -x "$brew_path" ]; then
+      printf '%s\n' "$brew_path"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+say_run() {
+  local argument
+
+  for argument in "$@"; do
+    printf '%q ' "$argument"
+  done
+  printf '\n'
+
+  if [ "$dry_run" = false ]; then
+    "$@"
+  fi
+}
+
+main() {
+  local source_dir os_name brew_bin
+
+  dry_run=false
+  if [ "$#" -gt 1 ]; then
+    printf 'usage: dotfiles-bootstrap [--dry-run]\n' >&2
+    return 2
+  fi
+  case "${1:-}" in
+    '') ;;
+    --dry-run) dry_run=true ;;
+    *)
+      printf 'usage: dotfiles-bootstrap [--dry-run]\n' >&2
+      return 2
+      ;;
+  esac
+
+  source_dir=${DOTFILES_SOURCE_DIR:-}
+  if [ -z "$source_dir" ]; then
+    printf 'DOTFILES_SOURCE_DIR must name the chezmoi source directory\n' >&2
+    return 2
+  fi
+
+  os_name=${DOTFILES_TEST_OS:-$(uname -s)}
+  case "$os_name" in
+    Darwin|Linux) ;;
+    *)
+      printf 'unsupported operating system: %s\n' "$os_name" >&2
+      return 1
+      ;;
+  esac
+
+  brew_bin=$(find_brew || true)
+  if [ -z "$brew_bin" ]; then
+    if [ "$dry_run" = false ]; then
+      printf 'Homebrew is required; install it from https://brew.sh\n' >&2
+      return 1
+    fi
+    brew_bin=brew
+  fi
+
+  say_run "$brew_bin" bundle --file "$source_dir/Brewfile"
+  say_run install -d -m 700 "$HOME/.local/share/tmux/resurrect"
+  say_run chezmoi --refresh-externals apply
+  printf '# pnpm install --frozen-lockfile (in DOTFILES_SOURCE_DIR)\n'
+  say_run pnpm --dir "$source_dir" install --frozen-lockfile
+  printf '# pnpm rules:generate (in DOTFILES_SOURCE_DIR)\n'
+  say_run pnpm --dir "$source_dir" rules:generate
+  say_run "$HOME/.local/bin/dotfiles-doctor"
+}
+
+main "$@"

@@ -1,0 +1,20 @@
+brew "chezmoi"
+brew "eza"
+brew "fd"
+brew "fzf"
+brew "git-lfs"
+brew "jq"
+brew "neovim"
+brew "node@22"
+brew "pnpm"
+brew "ripgrep"
+brew "shellcheck"
+brew "shfmt"
+brew "stylua"
+brew "tmux"
+brew "zoxide"
+
+if OS.mac?
+  cask "wezterm"
+  cask "font-jetbrains-mono-nerd-font"
+end
