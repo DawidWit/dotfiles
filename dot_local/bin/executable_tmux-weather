@@ -20,7 +20,7 @@ CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/tmux-weather"
 DATA="$CACHE_DIR/data"
 STAMP="$CACHE_DIR/last-attempt"
 LOCK="$CACHE_DIR/lock"
-RECLAIM_LOCK="$CACHE_DIR/reclaim"
+RECLAIM_LOCK="$LOCK/reclaim"
 OK_INTERVAL=1200  # refresh a good reading every 20 min
 RETRY_INTERVAL=60 # retry a failed one after 1 min
 
@@ -84,24 +84,63 @@ write_cache_file() {
   fi
 }
 
-lock_is_stale() {
-  local created
-  created=$(cat "$LOCK/created" 2>/dev/null || echo 0)
-  case "$created" in
-  '' | *[!0-9]*) created=0 ;;
+timestamp_is_stale() {
+  local timestamp
+  timestamp="$1"
+  case "$timestamp" in
+  '' | *[!0-9]*) timestamp=0 ;;
   esac
 
-  if ((created > 0 && now - created >= RETRY_INTERVAL)); then
+  if ((timestamp > 0 && now - timestamp >= RETRY_INTERVAL)); then
     return 0
   fi
 
   return 1
 }
 
+path_timestamp() {
+  local modified
+  modified=$(stat -f %m "$1" 2>/dev/null)
+  case "$modified" in
+  '' | *[!0-9]*) modified=$(stat -c %Y "$1" 2>/dev/null || echo 0) ;;
+  esac
+  case "$modified" in
+  '' | *[!0-9]*) modified=0 ;;
+  esac
+  printf '%s' "$modified"
+}
+
+lock_is_stale() {
+  local created
+  created=$(cat "$LOCK/created" 2>/dev/null || echo 0)
+  timestamp_is_stale "$created"
+}
+
+reclaim_is_stale() {
+  local created
+  created=$(cat "$RECLAIM_LOCK/created" 2>/dev/null || echo 0)
+  case "$created" in
+  '' | *[!0-9]*) created=$(path_timestamp "$RECLAIM_LOCK") ;;
+  esac
+  timestamp_is_stale "$created"
+}
+
+reclaim_owner_is_dead() {
+  local owner
+  owner=$(cat "$RECLAIM_LOCK/owner" 2>/dev/null || echo '')
+  case "$owner" in
+  '' | *[!0-9]*) return 0 ;;
+  esac
+  kill -0 "$owner" 2>/dev/null && return 1
+  return 0
+}
+
 lock_acquired=0
 reclaim_acquired=0
 quarantine_owned=0
+reclaim_quarantine_owned=0
 LOCK_QUARANTINE="${LOCK}.stale.$$"
+RECLAIM_QUARANTINE="${RECLAIM_LOCK}.stale.$$"
 release_lock() {
   if [ "$lock_acquired" -eq 1 ] && [ "$(cat "$LOCK/owner" 2>/dev/null || :)" = "$$" ]; then
     rm -rf "$LOCK"
@@ -112,6 +151,45 @@ release_lock() {
   if [ "$reclaim_acquired" -eq 1 ] && [ "$(cat "$RECLAIM_LOCK/owner" 2>/dev/null || :)" = "$$" ]; then
     rm -rf "$RECLAIM_LOCK"
   fi
+  if [ "$reclaim_quarantine_owned" -eq 1 ]; then
+    rm -rf "$RECLAIM_QUARANTINE"
+  fi
+}
+
+acquire_reclaim_lock() {
+  if mkdir "$RECLAIM_LOCK" 2>/dev/null; then
+    printf '%s' "$now" >"$RECLAIM_LOCK/created"
+    printf '%s' "$$" >"$RECLAIM_LOCK/owner"
+    reclaim_acquired=1
+    if [ -d "$LOCK" ] && lock_is_stale; then
+      return 0
+    fi
+    rm -rf "$RECLAIM_LOCK"
+    reclaim_acquired=0
+    return 1
+  fi
+
+  if ! [ -d "$LOCK" ] || ! lock_is_stale || ! reclaim_is_stale || ! reclaim_owner_is_dead; then
+    return 1
+  fi
+
+  if mv "$RECLAIM_LOCK" "$RECLAIM_QUARANTINE" 2>/dev/null; then
+    reclaim_quarantine_owned=1
+    rm -rf "$RECLAIM_QUARANTINE"
+    reclaim_quarantine_owned=0
+    if mkdir "$RECLAIM_LOCK" 2>/dev/null; then
+      printf '%s' "$now" >"$RECLAIM_LOCK/created"
+      printf '%s' "$$" >"$RECLAIM_LOCK/owner"
+      reclaim_acquired=1
+      if [ -d "$LOCK" ] && lock_is_stale; then
+        return 0
+      fi
+      rm -rf "$RECLAIM_LOCK"
+      reclaim_acquired=0
+    fi
+  fi
+
+  return 1
 }
 
 mkdir -p "$CACHE_DIR"
@@ -126,13 +204,10 @@ if ((now - last >= OK_INTERVAL)); then
   trap release_lock EXIT HUP INT TERM
 
   if [ -d "$LOCK" ] && lock_is_stale; then
-    if ! mkdir "$RECLAIM_LOCK" 2>/dev/null; then
+    if ! acquire_reclaim_lock; then
       cat "$DATA" 2>/dev/null
       exit 0
     fi
-
-    printf '%s' "$$" >"$RECLAIM_LOCK/owner"
-    reclaim_acquired=1
     if [ -d "$LOCK" ] && lock_is_stale; then
       if mv "$LOCK" "$LOCK_QUARANTINE" 2>/dev/null; then
         quarantine_owned=1

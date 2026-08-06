@@ -40,6 +40,19 @@ wait "$second_pid"
 assert_eq '☂ 12°C' "$(<"$concurrent_cache/tmux-weather/data")"
 [ ! -d "$concurrent_cache/tmux-weather/lock" ] || fail 'weather cache lock was not removed'
 
+orphan_cache="$tmp_dir/orphan-cache"
+orphan_dir="$orphan_cache/tmux-weather"
+orphan_reclaim="$orphan_dir/lock/reclaim"
+mkdir -p "$orphan_reclaim"
+printf '%s' "$(( $(date +%s) - 61 ))" >"$orphan_dir/lock/created"
+printf '%s' "$(( $(date +%s) - 61 ))" >"$orphan_reclaim/created"
+printf '%s' '☀ 8°C' >"$orphan_dir/data"
+
+orphan_recovery=$(XDG_CACHE_HOME="$orphan_cache" TMUX_WEATHER_RAW='Light rain:+12°C' bash "$weather")
+assert_eq '☂ 12°C' "$orphan_recovery"
+[ ! -d "$orphan_dir/lock/reclaim" ] || fail 'orphaned reclaim gate was not removed'
+[ ! -d "$orphan_dir/lock" ] || fail 'recovered weather lock was not removed'
+
 wait_for_path() {
   local file attempts
   file="$1"
