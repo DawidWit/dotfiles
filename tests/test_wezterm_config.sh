@@ -45,6 +45,7 @@ for rendered in "$rendered_darwin" "$rendered_linux"; do
   assert_contains "$rendered" 'wezterm.truncate_right'
   assert_contains "$rendered" "bg_state_dir .. '/count'"
   assert_contains "$rendered" 'bg_index = default_index'
+  assert_contains "$rendered" "image = 'background10.gif'"
 done
 
 assert_contains "$rendered_darwin" "key = 'c', mods = 'SUPER'"
