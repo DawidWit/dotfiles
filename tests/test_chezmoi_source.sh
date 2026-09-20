@@ -40,10 +40,11 @@ if ! output=$(HOME="$tmp_dir/home" \
   fail 'whole-source chezmoi dry-run failed'
 fi
 
-assert_contains "$output" '.config/zsh/aliases.zsh'
-assert_contains "$output" '.config/zsh/integrations.zsh'
-assert_not_contains "$output" 'diff --git a/.oh-my-zsh'
+assert_contains "$output" '.config/fish/config.fish'
+assert_contains "$output" '.config/ghostty/config'
+assert_contains "$output" '.config/zellij/config.kdl'
+assert_not_contains "$output" 'diff --git a/.config/zellij/plugins/zjstatus.wasm'
 assert_not_contains "$output" 'diff --git a/.tmux/plugins/tpm'
-assert_not_contains "$output" 'github.com/ohmyzsh'
+assert_not_contains "$output" 'github.com/dj95/zjstatus'
 
 pass 'whole-source chezmoi dry-run is isolated and offline'

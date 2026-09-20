@@ -1,0 +1,50 @@
+layout {
+    default_tab_template {
+        children
+        pane size=1 borderless=true {
+            plugin location="zjstatus"
+        }
+    }
+
+    // Split Focus: a narrow rail sized to what fastfetch actually prints,
+    // with btop taking the rest of the ultrawide.
+    tab name="Dashboard" focus=true {
+        pane split_direction="vertical" {
+            pane size="22%" split_direction="horizontal" {
+                pane size="60%" name="System" command="/usr/bin/fish" {
+                    args "-C" "clear; fastfetch"
+                }
+                pane size="40%" name="Disks" command="/home/dawid/.config/zellij/bin/disks-watch"
+            }
+            pane size="78%" name="Monitor" focus=true command="/usr/bin/btop"
+        }
+    }
+
+    tab name="Agent" {
+        pane split_direction="vertical" {
+            pane size="68%" name="AI Agent" focus=true
+            pane size="32%" split_direction="horizontal" {
+                pane size="50%" name="Shell"
+                pane size="50%" name="Tests"
+            }
+        }
+    }
+
+    tab name="Runtime" {
+        pane split_direction="vertical" {
+            pane size="50%" name="Application"
+            pane size="50%" name="Logs and Services"
+        }
+    }
+
+    tab name="Review" {
+        pane split_direction="vertical" {
+            pane size="65%" name="Git and Diff" focus=true
+            pane size="35%" name="Independent Verification"
+        }
+    }
+
+    tab name="Scratch" {
+        pane name="Scratch Shell"
+    }
+}

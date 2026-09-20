@@ -7,7 +7,7 @@ source "$repo/tests/lib/assert.sh"
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT
 
-for command_name in zsh git chezmoi tmux nvim node pnpm eza rg fd fzf zoxide shellcheck shfmt stylua; do
+for command_name in fish ghostty zellij starship atuin bat git chezmoi tmux nvim node pnpm eza rg fd fzf zoxide shellcheck shfmt stylua; do
   stub="$tmp_dir/$command_name"
   printf '#!/usr/bin/env bash\nexit 0\n' >"$stub"
   chmod +x "$stub"

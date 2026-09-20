@@ -73,15 +73,16 @@ for repo_path in AGENTS.md Brewfile CLAUDE.md GEMINI.md LICENSE README.md packag
   [ ! -e "$home_dir/$repo_path" ] || fail "repository infrastructure was applied to home: $repo_path"
 done
 
-[ ! -e "$home_dir/.oh-my-zsh" ] || fail 'fresh apply must not fetch Chezmoi externals'
+[ ! -e "$home_dir/.config/zellij/plugins/zjstatus.wasm" ] || fail 'fresh apply must not fetch Chezmoi externals'
 [ ! -s "$install_log" ] || fail 'routine chezmoi apply must not invoke package installers'
-zsh -n "$home_dir/.zprofile"
-zsh -n "$home_dir/.zshrc"
+fish --no-execute "$home_dir/.config/fish/config.fish"
+fish --no-execute "$home_dir/.config/fish/functions/cclaude.fish"
 bash -n "$home_dir/.local/bin/dotfiles-bootstrap"
 bash -n "$home_dir/.local/bin/dotfiles-doctor"
 bash -n "$home_dir/.local/bin/tmux-sessionizer"
 bash -n "$home_dir/.local/bin/tmux-weather"
-bash -n "$home_dir/.local/bin/wezterm-bg"
+bash -n "$home_dir/.config/zellij/bin/start-workspace"
+bash -n "$home_dir/.config/zellij/bin/disks-watch"
 
 git -C "$repo" diff --check
 

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Disks pane for the zellij Dashboard tab.
+#
+# duf prints once and exits, which would leave a frozen table on screen.
+# This redraws it on an interval and re-reads the pane width each pass so
+# it stays correct when panes are resized.
+
+interval="${1:-30}"
+
+while true; do
+    width="$(tput cols 2>/dev/null || echo 75)"
+    clear
+    duf --only local \
+        --output mountpoint,size,used,avail,usage \
+        --theme dark \
+        --width "$width"
+    printf '\n  %s · refreshing every %ss\n' "$(date '+%H:%M:%S')" "$interval"
+    sleep "$interval"
+done

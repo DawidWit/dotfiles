@@ -90,16 +90,6 @@ assert_eq '#ff9e64' "$(semantic_color "$rendered_tmux" 'set-gstatus-left' 'fg=' 
 assert_eq '#ff9e64' "$(semantic_color "$rendered_tmux" 'set-gwindow-status-current-format' 'bg=' after)"
 assert_eq '#565f89' "$(semantic_color "$rendered_tmux" '│' 'fg=' before)"
 
-rendered_wezterm=$(render_template "$repo/private_dot_config/wezterm/wezterm.lua.tmpl")
-assert_eq '#0d1428' "$(semantic_color "$rendered_wezterm" 'config.window_frame={' 'active_titlebar_bg=' table)"
-assert_eq '#16161e' "$(semantic_color "$rendered_wezterm" 'config.window_frame={' 'inactive_titlebar_bg=' table)"
-assert_eq '#0d1428' "$(semantic_color "$rendered_wezterm" ',active_tab={' 'bg_color=' table)"
-assert_eq '#c0caf5' "$(semantic_color "$rendered_wezterm" ',active_tab={' 'fg_color=' table)"
-assert_eq '#16161e' "$(semantic_color "$rendered_wezterm" ',inactive_tab={' 'bg_color=' table)"
-assert_eq '#565f89' "$(semantic_color "$rendered_wezterm" ',inactive_tab={' 'fg_color=' table)"
-assert_eq '#7aa2f7' "$(semantic_color "$rendered_wezterm" 'Text=\047\047..workspace' 'Color=' before)"
-assert_eq '#9ece6a' "$(semantic_color "$rendered_wezterm" 'Text=date..\047\047' 'Color=' before)"
-
 rendered_nvim=$(render_template "$repo/private_dot_config/nvim/lua/plugins/palette.lua.tmpl")
 assert_eq '#ff9e64' "$(semantic_color "$rendered_nvim" '\"Conditional\"' '[\"' before)"
 

@@ -1,5 +1,4 @@
-.config/wezterm/backgrounds/background*.*
-.oh-my-zsh/cache/
+.config/fish/fish_variables
 
 # Repository infrastructure, not home-directory targets
 AGENTS.md

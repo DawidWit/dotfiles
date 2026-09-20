@@ -5,7 +5,7 @@ main() {
   local command_name missing
 
   missing=0
-  for command_name in zsh git chezmoi tmux nvim node pnpm eza rg fd fzf zoxide shellcheck shfmt stylua; do
+  for command_name in fish ghostty zellij starship atuin bat git chezmoi tmux nvim node pnpm eza rg fd fzf zoxide shellcheck shfmt stylua; do
     if ! command -v "$command_name" >/dev/null 2>&1; then
       printf 'missing: %s\n' "$command_name" >&2
       missing=1
@@ -13,8 +13,8 @@ main() {
   done
 
   if [ -z "${DOTFILES_DOCTOR_SKIP_PATHS:-}" ]; then
-    if [ ! -d "$HOME/.oh-my-zsh" ]; then
-      printf 'missing: %s\n' "$HOME/.oh-my-zsh" >&2
+    if [ ! -f "$HOME/.config/zellij/plugins/zjstatus.wasm" ]; then
+      printf 'missing: %s\n' "$HOME/.config/zellij/plugins/zjstatus.wasm" >&2
       missing=1
     fi
     if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then

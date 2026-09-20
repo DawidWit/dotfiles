@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Ghostty's initial-command: open the persistent zellij workspace.
+#
+# A killed zellij session stays "resurrectable" and comes back with its
+# cached layout instead of the layout file, so layout edits never appear.
+# delete-session clears that. Without --force it refuses to touch a RUNNING
+# session (exits 1, harmless), so a second window still attaches to the live
+# one instead of destroying it.
+
+session="${1:-main}"
+layout="${2:-ai-ultrawide}"
+
+zellij delete-session "$session" >/dev/null 2>&1
+
+exec zellij attach --create "$session" options --default-layout "$layout"
