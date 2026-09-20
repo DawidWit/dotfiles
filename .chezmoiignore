@@ -18,4 +18,3 @@ rulesync.jsonc
 .worktrees/
 docs/
 node_modules/
-tests/

@@ -5,8 +5,7 @@
   "engines": { "node": ">=22", "pnpm": ">=10" },
   "scripts": {
     "rules:generate": "rulesync generate",
-    "rules:check": "rulesync generate --check",
-    "test": "bash tests/run"
+    "rules:check": "rulesync generate --check"
   },
   "devDependencies": { "rulesync": "16.7.0" }
 }

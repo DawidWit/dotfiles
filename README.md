@@ -45,16 +45,6 @@ pnpm rules:check
 
 Do not edit `AGENTS.md` or `CLAUDE.md` directly. `docs/superpowers/` is local-only planning material and must never be committed.
 
-## Tests
-
-Run the repository suite with:
-
-```bash
-pnpm test
-```
-
-The test suite uses temporary homes and caches, so it does not modify your user configuration or contact weather services.
-
 ## Directory map
 
 - `dot_local/bin/` — installed helper commands, including bootstrap and diagnostics.
@@ -62,4 +52,3 @@ The test suite uses temporary homes and caches, so it does not modify your user 
 - `dot_*.tmpl` — rendered Chezmoi templates for tmux and Git config.
 - `.chezmoidata.toml` — shared palette values used by templates.
 - `.rulesync/rules/` — canonical instructions that generate `AGENTS.md` and `CLAUDE.md`.
-- `tests/` — hermetic shell tests and Neovim smoke coverage.
