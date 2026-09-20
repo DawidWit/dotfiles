@@ -39,9 +39,13 @@ layout {
 
     // Editor: nvim owns most of the ultrawide. Its own explorer and picker
     // cover file navigation, so the side rail stays a plain shell for Git.
+    // nvim runs through fish rather than as the pane command, so quitting it
+    // leaves a usable prompt instead of zellij's "press Enter to re-run".
     tab name="Editor" {
         pane split_direction="vertical" {
-            pane size="72%" name="nvim" focus=true command="/usr/bin/nvim"
+            pane size="72%" name="nvim" focus=true command="/usr/bin/fish" {
+                args "-C" "nvim"
+            }
             pane size="28%" name="Git and Diff"
         }
     }
