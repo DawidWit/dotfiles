@@ -37,10 +37,12 @@ layout {
         }
     }
 
-    tab name="Review" {
+    // Editor: nvim owns most of the ultrawide. Its own explorer and picker
+    // cover file navigation, so the side rail stays a plain shell for Git.
+    tab name="Editor" {
         pane split_direction="vertical" {
-            pane size="65%" name="Git and Diff" focus=true
-            pane size="35%" name="Independent Verification"
+            pane size="72%" name="nvim" focus=true command="/usr/bin/nvim"
+            pane size="28%" name="Git and Diff"
         }
     }
 
